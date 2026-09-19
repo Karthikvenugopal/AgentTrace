@@ -25,6 +25,7 @@ from agenttrace.models import (
     new_id,
 )
 from agenttrace.serving.client import InferenceClient, InferenceError, InferenceRequest
+from agenttrace.telemetry.logging import bind_correlation
 from agenttrace.telemetry.metrics import METRICS
 from agenttrace.telemetry.tracing import trace_span
 from agenttrace.tracing.schema import AgentRecord, OutcomeRecord, RequestRecord
@@ -59,14 +60,21 @@ class CodingAgent:
         )
 
     async def run(self) -> AgentOutcome:
-        with trace_span(
-            "agent.execution",
-            {
-                "agenttrace.experiment_id": self.config.experiment_id,
-                "agenttrace.trace_id": self.trace_id,
-                "agenttrace.agent_id": self.config.agent_id,
-                "agenttrace.parent_agent_id": self.config.parent_agent_id,
-            },
+        with (
+            bind_correlation(
+                experiment_id=self.config.experiment_id,
+                trace_id=self.trace_id,
+                agent_id=self.config.agent_id,
+            ),
+            trace_span(
+                "agent.execution",
+                {
+                    "agenttrace.experiment_id": self.config.experiment_id,
+                    "agenttrace.trace_id": self.trace_id,
+                    "agenttrace.agent_id": self.config.agent_id,
+                    "agenttrace.parent_agent_id": self.config.parent_agent_id,
+                },
+            ),
         ):
             return await self._run()
 
@@ -114,6 +122,7 @@ class CodingAgent:
                 submitted = snapshot()
                 try:
                     with (
+                        bind_correlation(request_id=request_id),
                         METRICS.track_request("agent", self.config.endpoint.model),
                         trace_span(
                             "agent.step",
