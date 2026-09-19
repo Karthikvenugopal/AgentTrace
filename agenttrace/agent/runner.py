@@ -7,6 +7,7 @@ from datetime import timedelta
 
 from pydantic import ValidationError
 
+from agenttrace.agent.limits import ExecutionBudget
 from agenttrace.agent.protocol import FinishAction, ToolAction, parse_action, protocol_instruction
 from agenttrace.agent.tools import ToolRegistry, default_tools
 from agenttrace.agent.workspace import RepositoryWorkspace
@@ -75,17 +76,16 @@ class CodingAgent:
         ]
         total_input = 0
         total_output = 0
+        budget = ExecutionBudget(self.config.limits, started.monotonic)
         previous_submission: float | None = None
         summary = "execution limit reached"
         status = ExecutionStatus.LIMIT_REACHED
         iterations = 0
 
         for sequence in range(self.config.limits.max_iterations):
-            if snapshot().monotonic - started.monotonic >= self.config.limits.max_wall_time_seconds:
-                summary = "wall-time limit reached"
-                break
-            if total_input + total_output >= self.config.limits.max_total_tokens:
-                summary = "token budget reached"
+            stop_reason = budget.stop_reason(now_monotonic=snapshot().monotonic, next_iteration=sequence)
+            if stop_reason is not None:
+                summary = stop_reason
                 break
             iterations = sequence + 1
             request_id = new_id("req")
@@ -130,6 +130,7 @@ class CodingAgent:
                 output_tokens = self.counter.count(response.content)
             total_input += response.input_tokens or accounting.total
             total_output += output_tokens
+            budget.add_usage(response.input_tokens or accounting.total, output_tokens)
             try:
                 action = parse_action(response.content)
             except (ValidationError, ValueError) as exc:
