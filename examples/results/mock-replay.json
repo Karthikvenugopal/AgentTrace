@@ -1,0 +1,137 @@
+{
+  "replay_session_id": "replay_43f15a88f3fd4ef894649b46583bc810",
+  "source_trace_id": "trace_65c3bacc489949bd8c3afea804d36fc3",
+  "mode": "open_loop",
+  "started_at": "2026-09-19T19:13:31.086329Z",
+  "completed_at": "2026-09-19T19:13:31.183870Z",
+  "attempts": [
+    {
+      "replay_session_id": "replay_43f15a88f3fd4ef894649b46583bc810",
+      "source_trace_id": "trace_65c3bacc489949bd8c3afea804d36fc3",
+      "source_request_id": "req_eebf86f385c444a6bf01477fef7c1d8b",
+      "replay_request_id": "replayreq_8e58e7a530a544d08f8da89c09bb4fbc",
+      "agent_id": "agent-1",
+      "sequence_number": 0,
+      "attempt_number": 1,
+      "mode": "open_loop",
+      "scheduled_offset_seconds": 0.0,
+      "submitted_offset_seconds": 0.00013104099980409956,
+      "client_scheduling_delay_seconds": 0.00013104099980409956,
+      "submitted_at": "2026-09-19T19:13:31.086567Z",
+      "completed_at": "2026-09-19T19:13:31.128668Z",
+      "status": "succeeded",
+      "latency_seconds": 0.0421007500003725,
+      "ttft_seconds": 0.022936500000014348,
+      "input_tokens": 326,
+      "output_tokens": 1,
+      "stream_chunk_arrivals_seconds": [
+        0.022936500000014348,
+        0.029198332999840204,
+        0.03543920799984335
+      ],
+      "stream_chunk_token_counts": [
+        1,
+        1,
+        1
+      ],
+      "error_type": null,
+      "error_message": null
+    },
+    {
+      "replay_session_id": "replay_43f15a88f3fd4ef894649b46583bc810",
+      "source_trace_id": "trace_65c3bacc489949bd8c3afea804d36fc3",
+      "source_request_id": "req_3d3e940d9c9f4138b52501258a6dec08",
+      "replay_request_id": "replayreq_8acc6afc2eac4987b0fb2bf9c8d77d6d",
+      "agent_id": "agent-1",
+      "sequence_number": 1,
+      "attempt_number": 1,
+      "mode": "open_loop",
+      "scheduled_offset_seconds": 0.0046056000000000005,
+      "submitted_offset_seconds": 0.009212040999955207,
+      "client_scheduling_delay_seconds": 0.004606440999955206,
+      "submitted_at": "2026-09-19T19:13:31.095649Z",
+      "completed_at": "2026-09-19T19:13:31.128497Z",
+      "status": "succeeded",
+      "latency_seconds": 0.032848709000063536,
+      "ttft_seconds": 0.01409387500007142,
+      "input_tokens": 348,
+      "output_tokens": 7,
+      "stream_chunk_arrivals_seconds": [
+        0.01409387500007142,
+        0.0200084580001203,
+        0.026316458000110288
+      ],
+      "stream_chunk_token_counts": [
+        1,
+        2,
+        6
+      ],
+      "error_type": null,
+      "error_message": null
+    },
+    {
+      "replay_session_id": "replay_43f15a88f3fd4ef894649b46583bc810",
+      "source_trace_id": "trace_65c3bacc489949bd8c3afea804d36fc3",
+      "source_request_id": "req_46462ff04c51415b84f7d6dadd81da6b",
+      "replay_request_id": "replayreq_28cd2034ff7545ebb1e920cc4bd32f2b",
+      "agent_id": "agent-1",
+      "sequence_number": 2,
+      "attempt_number": 1,
+      "mode": "open_loop",
+      "scheduled_offset_seconds": 0.007964400000000002,
+      "submitted_offset_seconds": 0.009485041000061756,
+      "client_scheduling_delay_seconds": 0.001520641000061754,
+      "submitted_at": "2026-09-19T19:13:31.095922Z",
+      "completed_at": "2026-09-19T19:13:31.128792Z",
+      "status": "succeeded",
+      "latency_seconds": 0.03287062499975946,
+      "ttft_seconds": 0.013878624999961175,
+      "input_tokens": 358,
+      "output_tokens": 1,
+      "stream_chunk_arrivals_seconds": [
+        0.013878624999961175,
+        0.01980337499981033,
+        0.02602241700014929
+      ],
+      "stream_chunk_token_counts": [
+        1,
+        1,
+        1
+      ],
+      "error_type": null,
+      "error_message": null
+    },
+    {
+      "replay_session_id": "replay_43f15a88f3fd4ef894649b46583bc810",
+      "source_trace_id": "trace_65c3bacc489949bd8c3afea804d36fc3",
+      "source_request_id": "req_e5e5a4d45a0643cf80ecff85f110bac4",
+      "replay_request_id": "replayreq_340f809a9df44981ad43a75481b74240",
+      "agent_id": "agent-1",
+      "sequence_number": 3,
+      "attempt_number": 1,
+      "mode": "open_loop",
+      "scheduled_offset_seconds": 0.0634698,
+      "submitted_offset_seconds": 0.06452437500001906,
+      "client_scheduling_delay_seconds": 0.0010545750000190562,
+      "submitted_at": "2026-09-19T19:13:31.150962Z",
+      "completed_at": "2026-09-19T19:13:31.183799Z",
+      "status": "succeeded",
+      "latency_seconds": 0.03283833300019978,
+      "ttft_seconds": 0.013702541999919049,
+      "input_tokens": 430,
+      "output_tokens": 7,
+      "stream_chunk_arrivals_seconds": [
+        0.013702541999919049,
+        0.019955875000050582,
+        0.026245874999858643
+      ],
+      "stream_chunk_token_counts": [
+        1,
+        4,
+        4
+      ],
+      "error_type": null,
+      "error_message": null
+    }
+  ]
+}

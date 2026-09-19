@@ -1,0 +1,97 @@
+{
+  "configuration": {
+    "experiment_id": "mock-matrix-demo",
+    "matrix": {
+      "concurrent_agents": [
+        1,
+        2
+      ],
+      "context_tokens": [
+        64,
+        256
+      ],
+      "patterns": [
+        "concurrent",
+        "parent_subagents"
+      ],
+      "replay_modes": [
+        "open_loop",
+        "closed_loop"
+      ],
+      "workload_types": [
+        "parameterized"
+      ]
+    },
+    "measurement_label": "mock",
+    "output_dir": "results",
+    "randomize_order": true,
+    "repetitions": 2,
+    "replay": {
+      "active_subagents": null,
+      "arrival_rate": null,
+      "concurrent_agents": null,
+      "endpoint": {
+        "base_url": "http://127.0.0.1:8010/v1",
+        "max_retries": 0,
+        "model": "agenttrace-mock",
+        "stream": true,
+        "timeout_seconds": 30.0
+      },
+      "execution_length": 2,
+      "max_concurrency": 16,
+      "mode": "parameterized",
+      "output_tokens": 16,
+      "prompt_tokens": null,
+      "request_timeout_seconds": 30.0,
+      "retry_count": 1,
+      "seed": 7,
+      "time_scale": 0.05,
+      "tool_wait_seconds": null
+    },
+    "rotate_order_each_repetition": true,
+    "seed": 7,
+    "server_metadata": {
+      "backend": "agenttrace-mock",
+      "prefix_caching": false,
+      "simulated_delays": true
+    },
+    "source_trace": "examples/traces/mock-agent.jsonl",
+    "warmup_requests": 1
+  },
+  "experiment_id": "mock-matrix-demo",
+  "provenance": {
+    "agenttrace_version": "0.1.0",
+    "captured_at": "2026-09-19T19:13:36.696166+00:00",
+    "dependencies": {
+      "httpx": "0.28.1",
+      "opentelemetry-sdk": "1.44.0",
+      "prometheus-client": "0.26.0",
+      "pydantic": "2.13.5",
+      "torch": null,
+      "transformers": null,
+      "vllm": null
+    },
+    "device": {
+      "cuda_available": false,
+      "cuda_version": null,
+      "devices": [],
+      "limitation": "client-process visibility only; this does not expose inference-server GPU memory or utilization for a separate vLLM process",
+      "scope": "agenttrace_client_process",
+      "torch_available": false,
+      "torch_version": null
+    },
+    "logical_cpu_count": 8,
+    "machine": "arm64",
+    "platform": "macOS-26.6.2-arm64-arm-64bit-Mach-O",
+    "python_version": "3.13.1"
+  },
+  "server_configuration": {
+    "backend": "agenttrace-mock",
+    "prefix_caching": false,
+    "simulated_delays": true
+  },
+  "started_at": "2026-09-19T19:13:36.695975+00:00",
+  "token_count_method": "whitespace_estimate",
+  "tokenizer": "agenttrace/whitespace-v1",
+  "warmups_excluded_from_measurements": true
+}

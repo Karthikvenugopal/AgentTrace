@@ -1,0 +1,724 @@
+{
+  "charts": {
+    "concurrency_vs_generation_throughput": "results/mock-matrix-demo/charts/concurrency-vs-output-throughput.png",
+    "concurrency_vs_latency": "results/mock-matrix-demo/charts/concurrency-vs-latency.png",
+    "context_vs_ttft": "results/mock-matrix-demo/charts/context-vs-ttft.png"
+  },
+  "experiment_id": "mock-matrix-demo",
+  "interpretation": "This file reports observations only. It does not claim causal improvements or generalize beyond the recorded configuration.",
+  "measured_aggregate_results": {
+    "case_count": 16,
+    "cases": [
+      {
+        "aggregation_policy": "successful attempts only for latency and throughput; all failed, timeout, and retry attempts counted separately",
+        "attempts": 8,
+        "case_id": "case-1d271f28df",
+        "configuration": {
+          "case_id": "case-1d271f28df",
+          "concurrent_agents": 2,
+          "context_tokens": 256,
+          "pattern": "concurrent",
+          "replay_mode": "closed_loop",
+          "workload_type": "parameterized"
+        },
+        "failed_attempts": 0,
+        "input_token_throughput_per_second": 14820.067877068694,
+        "latency_seconds": {
+          "count": 8,
+          "maximum": 0.033438667000154965,
+          "median": 0.03294816650009125,
+          "minimum": 0.032831542000167246,
+          "p95": null,
+          "p99": null
+        },
+        "measured_duration_seconds": 0.138191,
+        "output_token_throughput_per_second": 926.2542423167934,
+        "request_throughput_per_second": 57.890890144799585,
+        "retried_attempts": 0,
+        "successful_requests": 8,
+        "timeout_attempts": 0,
+        "total_input_tokens": 2048,
+        "total_output_tokens": 128,
+        "trials": 2,
+        "ttft_seconds": {
+          "count": 8,
+          "maximum": 0.014172250000228814,
+          "median": 0.013806687499936743,
+          "minimum": 0.013581749999957538,
+          "p95": null,
+          "p99": null
+        }
+      },
+      {
+        "aggregation_policy": "successful attempts only for latency and throughput; all failed, timeout, and retry attempts counted separately",
+        "attempts": 8,
+        "case_id": "case-1de954e9c5",
+        "configuration": {
+          "case_id": "case-1de954e9c5",
+          "concurrent_agents": 2,
+          "context_tokens": 256,
+          "pattern": "parent_subagents",
+          "replay_mode": "open_loop",
+          "workload_type": "parameterized"
+        },
+        "failed_attempts": 0,
+        "input_token_throughput_per_second": 30458.513660226956,
+        "latency_seconds": {
+          "count": 8,
+          "maximum": 0.03341866700020546,
+          "median": 0.03197949950003931,
+          "minimum": 0.030673707999994804,
+          "p95": null,
+          "p99": null
+        },
+        "measured_duration_seconds": 0.067239,
+        "output_token_throughput_per_second": 1903.6571037641847,
+        "request_throughput_per_second": 118.97856898526155,
+        "retried_attempts": 0,
+        "successful_requests": 8,
+        "timeout_attempts": 0,
+        "total_input_tokens": 2048,
+        "total_output_tokens": 128,
+        "trials": 2,
+        "ttft_seconds": {
+          "count": 8,
+          "maximum": 0.01387404199977027,
+          "median": 0.01256372900002134,
+          "minimum": 0.01120745900016118,
+          "p95": null,
+          "p99": null
+        }
+      },
+      {
+        "aggregation_policy": "successful attempts only for latency and throughput; all failed, timeout, and retry attempts counted separately",
+        "attempts": 4,
+        "case_id": "case-3424bba683",
+        "configuration": {
+          "case_id": "case-3424bba683",
+          "concurrent_agents": 1,
+          "context_tokens": 64,
+          "pattern": "concurrent",
+          "replay_mode": "open_loop",
+          "workload_type": "parameterized"
+        },
+        "failed_attempts": 0,
+        "input_token_throughput_per_second": 3166.6707899359244,
+        "latency_seconds": {
+          "count": 4,
+          "maximum": 0.04029175000005125,
+          "median": 0.03417345799994109,
+          "minimum": 0.03189212500001304,
+          "p95": null,
+          "p99": null
+        },
+        "measured_duration_seconds": 0.080842,
+        "output_token_throughput_per_second": 791.6676974839811,
+        "request_throughput_per_second": 49.47923109274882,
+        "retried_attempts": 0,
+        "successful_requests": 4,
+        "timeout_attempts": 0,
+        "total_input_tokens": 256,
+        "total_output_tokens": 64,
+        "trials": 2,
+        "ttft_seconds": {
+          "count": 4,
+          "maximum": 0.021213665999766818,
+          "median": 0.015130020500009778,
+          "minimum": 0.013409584000328323,
+          "p95": null,
+          "p99": null
+        }
+      },
+      {
+        "aggregation_policy": "successful attempts only for latency and throughput; all failed, timeout, and retry attempts counted separately",
+        "attempts": 4,
+        "case_id": "case-57406a3d0f",
+        "configuration": {
+          "case_id": "case-57406a3d0f",
+          "concurrent_agents": 1,
+          "context_tokens": 64,
+          "pattern": "concurrent",
+          "replay_mode": "closed_loop",
+          "workload_type": "parameterized"
+        },
+        "failed_attempts": 0,
+        "input_token_throughput_per_second": 1887.9334503458754,
+        "latency_seconds": {
+          "count": 4,
+          "maximum": 0.03258920799999032,
+          "median": 0.03252089650004564,
+          "minimum": 0.03239587500002017,
+          "p95": null,
+          "p99": null
+        },
+        "measured_duration_seconds": 0.135598,
+        "output_token_throughput_per_second": 471.98336258646884,
+        "request_throughput_per_second": 29.498960161654303,
+        "retried_attempts": 0,
+        "successful_requests": 4,
+        "timeout_attempts": 0,
+        "total_input_tokens": 256,
+        "total_output_tokens": 64,
+        "trials": 2,
+        "ttft_seconds": {
+          "count": 4,
+          "maximum": 0.013469167000039306,
+          "median": 0.013426749500013102,
+          "minimum": 0.013358333999804017,
+          "p95": null,
+          "p99": null
+        }
+      },
+      {
+        "aggregation_policy": "successful attempts only for latency and throughput; all failed, timeout, and retry attempts counted separately",
+        "attempts": 8,
+        "case_id": "case-62e829a596",
+        "configuration": {
+          "case_id": "case-62e829a596",
+          "concurrent_agents": 2,
+          "context_tokens": 64,
+          "pattern": "parent_subagents",
+          "replay_mode": "closed_loop",
+          "workload_type": "parameterized"
+        },
+        "failed_attempts": 0,
+        "input_token_throughput_per_second": 3585.5346088125716,
+        "latency_seconds": {
+          "count": 8,
+          "maximum": 0.037598542000068846,
+          "median": 0.033188145999929475,
+          "minimum": 0.03274562499973399,
+          "p95": null,
+          "p99": null
+        },
+        "measured_duration_seconds": 0.142796,
+        "output_token_throughput_per_second": 896.3836522031429,
+        "request_throughput_per_second": 56.02397826269643,
+        "retried_attempts": 0,
+        "successful_requests": 8,
+        "timeout_attempts": 0,
+        "total_input_tokens": 512,
+        "total_output_tokens": 128,
+        "trials": 2,
+        "ttft_seconds": {
+          "count": 8,
+          "maximum": 0.018608249999942927,
+          "median": 0.013974896000036097,
+          "minimum": 0.013586832999862963,
+          "p95": null,
+          "p99": null
+        }
+      },
+      {
+        "aggregation_policy": "successful attempts only for latency and throughput; all failed, timeout, and retry attempts counted separately",
+        "attempts": 8,
+        "case_id": "case-650546bcf1",
+        "configuration": {
+          "case_id": "case-650546bcf1",
+          "concurrent_agents": 2,
+          "context_tokens": 64,
+          "pattern": "parent_subagents",
+          "replay_mode": "open_loop",
+          "workload_type": "parameterized"
+        },
+        "failed_attempts": 0,
+        "input_token_throughput_per_second": 7358.96514552641,
+        "latency_seconds": {
+          "count": 8,
+          "maximum": 0.033834709000075236,
+          "median": 0.03270274999999856,
+          "minimum": 0.030800250000083906,
+          "p95": null,
+          "p99": null
+        },
+        "measured_duration_seconds": 0.069575,
+        "output_token_throughput_per_second": 1839.7412863816025,
+        "request_throughput_per_second": 114.98383039885016,
+        "retried_attempts": 0,
+        "successful_requests": 8,
+        "timeout_attempts": 0,
+        "total_input_tokens": 512,
+        "total_output_tokens": 128,
+        "trials": 2,
+        "ttft_seconds": {
+          "count": 8,
+          "maximum": 0.014040749999821855,
+          "median": 0.013640917000202535,
+          "minimum": 0.011585374999867781,
+          "p95": null,
+          "p99": null
+        }
+      },
+      {
+        "aggregation_policy": "successful attempts only for latency and throughput; all failed, timeout, and retry attempts counted separately",
+        "attempts": 4,
+        "case_id": "case-6deac7e7bc",
+        "configuration": {
+          "case_id": "case-6deac7e7bc",
+          "concurrent_agents": 1,
+          "context_tokens": 256,
+          "pattern": "parent_subagents",
+          "replay_mode": "closed_loop",
+          "workload_type": "parameterized"
+        },
+        "failed_attempts": 0,
+        "input_token_throughput_per_second": 7530.463814797655,
+        "latency_seconds": {
+          "count": 4,
+          "maximum": 0.03274429200018858,
+          "median": 0.03258966649991635,
+          "minimum": 0.03251025000008667,
+          "p95": null,
+          "p99": null
+        },
+        "measured_duration_seconds": 0.13598100000000002,
+        "output_token_throughput_per_second": 470.6539884248534,
+        "request_throughput_per_second": 29.41587427655334,
+        "retried_attempts": 0,
+        "successful_requests": 4,
+        "timeout_attempts": 0,
+        "total_input_tokens": 1024,
+        "total_output_tokens": 64,
+        "trials": 2,
+        "ttft_seconds": {
+          "count": 4,
+          "maximum": 0.013545416999932058,
+          "median": 0.013519062500108703,
+          "minimum": 0.013457915999879333,
+          "p95": null,
+          "p99": null
+        }
+      },
+      {
+        "aggregation_policy": "successful attempts only for latency and throughput; all failed, timeout, and retry attempts counted separately",
+        "attempts": 4,
+        "case_id": "case-7648dfd4bb",
+        "configuration": {
+          "case_id": "case-7648dfd4bb",
+          "concurrent_agents": 1,
+          "context_tokens": 64,
+          "pattern": "parent_subagents",
+          "replay_mode": "closed_loop",
+          "workload_type": "parameterized"
+        },
+        "failed_attempts": 0,
+        "input_token_throughput_per_second": 1886.6255932553133,
+        "latency_seconds": {
+          "count": 4,
+          "maximum": 0.03265241700000843,
+          "median": 0.0325100829998064,
+          "minimum": 0.03245670800015432,
+          "p95": null,
+          "p99": null
+        },
+        "measured_duration_seconds": 0.135692,
+        "output_token_throughput_per_second": 471.65639831382833,
+        "request_throughput_per_second": 29.47852489461427,
+        "retried_attempts": 0,
+        "successful_requests": 4,
+        "timeout_attempts": 0,
+        "total_input_tokens": 256,
+        "total_output_tokens": 64,
+        "trials": 2,
+        "ttft_seconds": {
+          "count": 4,
+          "maximum": 0.013561082999785867,
+          "median": 0.013445812999862028,
+          "minimum": 0.013438791999760724,
+          "p95": null,
+          "p99": null
+        }
+      },
+      {
+        "aggregation_policy": "successful attempts only for latency and throughput; all failed, timeout, and retry attempts counted separately",
+        "attempts": 4,
+        "case_id": "case-7daf8c7899",
+        "configuration": {
+          "case_id": "case-7daf8c7899",
+          "concurrent_agents": 1,
+          "context_tokens": 256,
+          "pattern": "concurrent",
+          "replay_mode": "open_loop",
+          "workload_type": "parameterized"
+        },
+        "failed_attempts": 0,
+        "input_token_throughput_per_second": 14661.874829970933,
+        "latency_seconds": {
+          "count": 4,
+          "maximum": 0.032449208999878465,
+          "median": 0.03240474949984673,
+          "minimum": 0.03220991699981823,
+          "p95": null,
+          "p99": null
+        },
+        "measured_duration_seconds": 0.069841,
+        "output_token_throughput_per_second": 916.3671768731833,
+        "request_throughput_per_second": 57.27294855457396,
+        "retried_attempts": 0,
+        "successful_requests": 4,
+        "timeout_attempts": 0,
+        "total_input_tokens": 1024,
+        "total_output_tokens": 64,
+        "trials": 2,
+        "ttft_seconds": {
+          "count": 4,
+          "maximum": 0.01338241699977516,
+          "median": 0.013340375000097993,
+          "minimum": 0.013122541999564419,
+          "p95": null,
+          "p99": null
+        }
+      },
+      {
+        "aggregation_policy": "successful attempts only for latency and throughput; all failed, timeout, and retry attempts counted separately",
+        "attempts": 4,
+        "case_id": "case-8f9dbcb7b4",
+        "configuration": {
+          "case_id": "case-8f9dbcb7b4",
+          "concurrent_agents": 1,
+          "context_tokens": 256,
+          "pattern": "parent_subagents",
+          "replay_mode": "open_loop",
+          "workload_type": "parameterized"
+        },
+        "failed_attempts": 0,
+        "input_token_throughput_per_second": 13680.329182920963,
+        "latency_seconds": {
+          "count": 4,
+          "maximum": 0.03715804199964623,
+          "median": 0.03247666650008796,
+          "minimum": 0.032394207999914215,
+          "p95": null,
+          "p99": null
+        },
+        "measured_duration_seconds": 0.074852,
+        "output_token_throughput_per_second": 855.0205739325602,
+        "request_throughput_per_second": 53.43878587078501,
+        "retried_attempts": 0,
+        "successful_requests": 4,
+        "timeout_attempts": 0,
+        "total_input_tokens": 1024,
+        "total_output_tokens": 64,
+        "trials": 2,
+        "ttft_seconds": {
+          "count": 4,
+          "maximum": 0.018429540999932215,
+          "median": 0.013378957999975682,
+          "minimum": 0.013326291999874229,
+          "p95": null,
+          "p99": null
+        }
+      },
+      {
+        "aggregation_policy": "successful attempts only for latency and throughput; all failed, timeout, and retry attempts counted separately",
+        "attempts": 4,
+        "case_id": "case-a7c858a6b0",
+        "configuration": {
+          "case_id": "case-a7c858a6b0",
+          "concurrent_agents": 1,
+          "context_tokens": 64,
+          "pattern": "parent_subagents",
+          "replay_mode": "open_loop",
+          "workload_type": "parameterized"
+        },
+        "failed_attempts": 0,
+        "input_token_throughput_per_second": 3658.3448847478453,
+        "latency_seconds": {
+          "count": 4,
+          "maximum": 0.03245529200012243,
+          "median": 0.03241475000027094,
+          "minimum": 0.03240704200015898,
+          "p95": null,
+          "p99": null
+        },
+        "measured_duration_seconds": 0.06997700000000001,
+        "output_token_throughput_per_second": 914.5862211869613,
+        "request_throughput_per_second": 57.16163882418508,
+        "retried_attempts": 0,
+        "successful_requests": 4,
+        "timeout_attempts": 0,
+        "total_input_tokens": 256,
+        "total_output_tokens": 64,
+        "trials": 2,
+        "ttft_seconds": {
+          "count": 4,
+          "maximum": 0.013393875000019762,
+          "median": 0.013384395499997481,
+          "minimum": 0.013335374999769556,
+          "p95": null,
+          "p99": null
+        }
+      },
+      {
+        "aggregation_policy": "successful attempts only for latency and throughput; all failed, timeout, and retry attempts counted separately",
+        "attempts": 8,
+        "case_id": "case-a943e8f8d2",
+        "configuration": {
+          "case_id": "case-a943e8f8d2",
+          "concurrent_agents": 2,
+          "context_tokens": 256,
+          "pattern": "parent_subagents",
+          "replay_mode": "closed_loop",
+          "workload_type": "parameterized"
+        },
+        "failed_attempts": 0,
+        "input_token_throughput_per_second": 15191.30060676191,
+        "latency_seconds": {
+          "count": 8,
+          "maximum": 0.03292004199965959,
+          "median": 0.03235599999970873,
+          "minimum": 0.031246292000105313,
+          "p95": null,
+          "p99": null
+        },
+        "measured_duration_seconds": 0.134814,
+        "output_token_throughput_per_second": 949.4562879226194,
+        "request_throughput_per_second": 59.34101799516371,
+        "retried_attempts": 0,
+        "successful_requests": 8,
+        "timeout_attempts": 0,
+        "total_input_tokens": 2048,
+        "total_output_tokens": 128,
+        "trials": 2,
+        "ttft_seconds": {
+          "count": 8,
+          "maximum": 0.013859707999927195,
+          "median": 0.013626791499973478,
+          "minimum": 0.012154125000051863,
+          "p95": null,
+          "p99": null
+        }
+      },
+      {
+        "aggregation_policy": "successful attempts only for latency and throughput; all failed, timeout, and retry attempts counted separately",
+        "attempts": 8,
+        "case_id": "case-b28bdd04c5",
+        "configuration": {
+          "case_id": "case-b28bdd04c5",
+          "concurrent_agents": 2,
+          "context_tokens": 64,
+          "pattern": "concurrent",
+          "replay_mode": "open_loop",
+          "workload_type": "parameterized"
+        },
+        "failed_attempts": 0,
+        "input_token_throughput_per_second": 7028.718906155621,
+        "latency_seconds": {
+          "count": 8,
+          "maximum": 0.03656804199999897,
+          "median": 0.032801500000005035,
+          "minimum": 0.030848208999941562,
+          "p95": null,
+          "p99": null
+        },
+        "measured_duration_seconds": 0.07284399999999999,
+        "output_token_throughput_per_second": 1757.1797265389052,
+        "request_throughput_per_second": 109.82373290868158,
+        "retried_attempts": 0,
+        "successful_requests": 8,
+        "timeout_attempts": 0,
+        "total_input_tokens": 512,
+        "total_output_tokens": 128,
+        "trials": 2,
+        "ttft_seconds": {
+          "count": 8,
+          "maximum": 0.018036166000001685,
+          "median": 0.013839208499803135,
+          "minimum": 0.011319250000269676,
+          "p95": null,
+          "p99": null
+        }
+      },
+      {
+        "aggregation_policy": "successful attempts only for latency and throughput; all failed, timeout, and retry attempts counted separately",
+        "attempts": 8,
+        "case_id": "case-c2b2666bca",
+        "configuration": {
+          "case_id": "case-c2b2666bca",
+          "concurrent_agents": 2,
+          "context_tokens": 256,
+          "pattern": "concurrent",
+          "replay_mode": "open_loop",
+          "workload_type": "parameterized"
+        },
+        "failed_attempts": 0,
+        "input_token_throughput_per_second": 28673.83512544803,
+        "latency_seconds": {
+          "count": 8,
+          "maximum": 0.03312404200005403,
+          "median": 0.032995708500038745,
+          "minimum": 0.032723750000059226,
+          "p95": null,
+          "p99": null
+        },
+        "measured_duration_seconds": 0.071424,
+        "output_token_throughput_per_second": 1792.1146953405018,
+        "request_throughput_per_second": 112.00716845878136,
+        "retried_attempts": 0,
+        "successful_requests": 8,
+        "timeout_attempts": 0,
+        "total_input_tokens": 2048,
+        "total_output_tokens": 128,
+        "trials": 2,
+        "ttft_seconds": {
+          "count": 8,
+          "maximum": 0.013895417000185262,
+          "median": 0.013704728999982763,
+          "minimum": 0.013598458000160463,
+          "p95": null,
+          "p99": null
+        }
+      },
+      {
+        "aggregation_policy": "successful attempts only for latency and throughput; all failed, timeout, and retry attempts counted separately",
+        "attempts": 8,
+        "case_id": "case-c81c36450f",
+        "configuration": {
+          "case_id": "case-c81c36450f",
+          "concurrent_agents": 2,
+          "context_tokens": 64,
+          "pattern": "concurrent",
+          "replay_mode": "closed_loop",
+          "workload_type": "parameterized"
+        },
+        "failed_attempts": 0,
+        "input_token_throughput_per_second": 3762.630902076061,
+        "latency_seconds": {
+          "count": 8,
+          "maximum": 0.03340787499973885,
+          "median": 0.03258402100004787,
+          "minimum": 0.03139187499982654,
+          "p95": null,
+          "p99": null
+        },
+        "measured_duration_seconds": 0.136075,
+        "output_token_throughput_per_second": 940.6577255190152,
+        "request_throughput_per_second": 58.79110784493845,
+        "retried_attempts": 0,
+        "successful_requests": 8,
+        "timeout_attempts": 0,
+        "total_input_tokens": 512,
+        "total_output_tokens": 128,
+        "trials": 2,
+        "ttft_seconds": {
+          "count": 8,
+          "maximum": 0.014122749999842199,
+          "median": 0.013645353999663712,
+          "minimum": 0.013379958999848895,
+          "p95": null,
+          "p99": null
+        }
+      },
+      {
+        "aggregation_policy": "successful attempts only for latency and throughput; all failed, timeout, and retry attempts counted separately",
+        "attempts": 4,
+        "case_id": "case-d00b8f2fde",
+        "configuration": {
+          "case_id": "case-d00b8f2fde",
+          "concurrent_agents": 1,
+          "context_tokens": 256,
+          "pattern": "concurrent",
+          "replay_mode": "closed_loop",
+          "workload_type": "parameterized"
+        },
+        "failed_attempts": 0,
+        "input_token_throughput_per_second": 7732.445310317225,
+        "latency_seconds": {
+          "count": 4,
+          "maximum": 0.032761458000095445,
+          "median": 0.03200652050009012,
+          "minimum": 0.03008620799982964,
+          "p95": null,
+          "p99": null
+        },
+        "measured_duration_seconds": 0.13242900000000002,
+        "output_token_throughput_per_second": 483.2778318948266,
+        "request_throughput_per_second": 30.204864493426662,
+        "retried_attempts": 0,
+        "successful_requests": 4,
+        "timeout_attempts": 0,
+        "total_input_tokens": 1024,
+        "total_output_tokens": 64,
+        "trials": 2,
+        "ttft_seconds": {
+          "count": 4,
+          "maximum": 0.013616791999993438,
+          "median": 0.012916145999952278,
+          "minimum": 0.0109512909998557,
+          "p95": null,
+          "p99": null
+        }
+      }
+    ],
+    "experiment_id": "mock-matrix-demo"
+  },
+  "source_trace_analysis": {
+    "agent_count": 1,
+    "agent_idle_waiting_for_tools_seconds": 0.5216470409995964,
+    "inter_chunk_arrival_seconds": {
+      "count": 8,
+      "maximum": 0.006315041000107158,
+      "median": 0.006297166999956971,
+      "minimum": 0.0062612920000901795,
+      "p95": null,
+      "p99": null
+    },
+    "latency_seconds": {
+      "count": 4,
+      "maximum": 0.04534400000011374,
+      "median": 0.033088688000134425,
+      "minimum": 0.0328458750000209,
+      "p95": null,
+      "p99": null
+    },
+    "maximum_inference_request_concurrency": 1,
+    "per_agent": {
+      "agent-1": {
+        "context_growth_tokens_by_step": [
+          0,
+          22,
+          10,
+          72
+        ],
+        "cumulative_prompt_tokens": [
+          326,
+          674,
+          1032,
+          1462
+        ],
+        "prompt_tokens_by_step": [
+          326,
+          348,
+          358,
+          430
+        ],
+        "steps": 4,
+        "total_task_tokens": 1478
+      }
+    },
+    "request_count": 4,
+    "stream_timing_semantics": "inter-chunk arrivals are transport observations; chunks containing multiple tokens do not reveal individual token decode latency",
+    "subagent_count": 0,
+    "tool_duration_seconds": {
+      "count": 3,
+      "maximum": 0.5211781250000058,
+      "median": 0.0002899999999499414,
+      "minimum": 0.00017891599964059424,
+      "p95": null,
+      "p99": null
+    },
+    "tool_output_tokens": 95,
+    "ttft_seconds": {
+      "count": 4,
+      "maximum": 0.026131791999887355,
+      "median": 0.013977291999935915,
+      "minimum": 0.013676624999789055,
+      "p95": null,
+      "p99": null
+    }
+  },
+  "unavailable_analyses": {
+    "request_level_server_queueing": "vLLM Prometheus queue histograms are aggregate and cannot be assigned exactly to individual requests without backend-supported correlation",
+    "tool_wait_vs_server_utilization": "requires aligned time-series vLLM utilization samples; before/after counters are not sufficient for a utilization curve"
+  }
+}
