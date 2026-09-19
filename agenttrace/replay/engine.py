@@ -46,6 +46,54 @@ class ReplayEngine:
             attempts=attempts,
         )
 
+    async def run_closed_loop(self, workload: list[WorkloadRequest]) -> ReplaySessionResult:
+        """Advance each agent only after its prior response and recorded think/tool delay."""
+
+        session_id = new_id("replay")
+        wall_started = datetime.now(UTC)
+        monotonic_started = time.monotonic()
+        semaphore = asyncio.Semaphore(self.config.max_concurrency)
+        streams: dict[str, list[WorkloadRequest]] = {}
+        for request in workload:
+            streams.setdefault(request.agent_id, []).append(request)
+        for requests in streams.values():
+            requests.sort(key=lambda item: item.sequence_number)
+
+        async def run_stream(requests: list[WorkloadRequest]) -> list[ReplayAttempt]:
+            stream_attempts: list[ReplayAttempt] = []
+            if requests:
+                initial_delay = requests[0].recorded_submission_offset_seconds * self.config.time_scale
+                await asyncio.sleep(initial_delay)
+            for index, request in enumerate(requests):
+                if index > 0:
+                    await asyncio.sleep(
+                        request.recorded_inter_request_seconds * self.config.time_scale
+                    )
+                scheduled = time.monotonic() - monotonic_started
+                async with semaphore:
+                    stream_attempts.extend(
+                        await self._issue_with_retries(
+                            request,
+                            session_id=session_id,
+                            mode="closed_loop",
+                            scheduled_offset=scheduled,
+                            session_started=monotonic_started,
+                        )
+                    )
+            return stream_attempts
+
+        nested = await asyncio.gather(*(run_stream(requests) for requests in streams.values()))
+        attempts = [attempt for stream in nested for attempt in stream]
+        attempts.sort(key=lambda attempt: attempt.submitted_at)
+        return ReplaySessionResult(
+            replay_session_id=session_id,
+            source_trace_id=workload[0].source_trace_id if workload else "empty",
+            mode="closed_loop",
+            started_at=wall_started,
+            completed_at=datetime.now(UTC),
+            attempts=attempts,
+        )
+
     async def _issue_with_retries(
         self,
         request: WorkloadRequest,
