@@ -28,6 +28,7 @@ from agenttrace.serving.client import InferenceClient, InferenceError, Inference
 from agenttrace.telemetry.logging import bind_correlation
 from agenttrace.telemetry.metrics import METRICS
 from agenttrace.telemetry.tracing import trace_span
+from agenttrace.tracing.redaction import content_fields
 from agenttrace.tracing.schema import AgentRecord, OutcomeRecord, RequestRecord
 from agenttrace.tracing.storage import TraceWriter
 
@@ -283,22 +284,11 @@ class CodingAgent:
         return outcome
 
     def _content_fields(self, messages: list[ChatMessage]) -> dict[str, object]:
-        mode = self.config.trace.content_mode
-        if mode == "metadata_only":
-            return {"prompt": None, "messages": None}
-        if mode == "redacted":
-            return {
-                "prompt": "[REDACTED]",
-                "messages": [
-                    {"role": message.role.value, "content": "[REDACTED]"} for message in messages
-                ],
-            }
-        return {
-            "prompt": "\n".join(message.content for message in messages),
-            "messages": [
-                message.model_dump(mode="json", exclude_none=True) for message in messages
-            ],
-        }
+        return content_fields(
+            messages,
+            mode=self.config.trace.content_mode,
+            patterns=self.config.trace.redact_patterns,
+        )
 
     def _request_base(  # type: ignore[no-untyped-def]
         self,

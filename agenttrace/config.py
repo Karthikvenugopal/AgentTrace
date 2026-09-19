@@ -6,7 +6,15 @@ from pathlib import Path
 from typing import Any, Literal, TypeVar, cast
 
 import yaml
-from pydantic import BaseModel, ConfigDict, Field, HttpUrl, SecretStr, model_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    HttpUrl,
+    SecretStr,
+    field_validator,
+    model_validator,
+)
 
 
 class StrictModel(BaseModel):
@@ -53,6 +61,18 @@ class TraceConfig(StrictModel):
     content_mode: Literal["full", "redacted", "metadata_only"] = "redacted"
     redact_patterns: list[str] = Field(default_factory=list)
     flush_each_record: bool = True
+
+    @field_validator("redact_patterns")
+    @classmethod
+    def patterns_are_valid_regex(cls, patterns: list[str]) -> list[str]:
+        import re
+
+        for pattern in patterns:
+            try:
+                re.compile(pattern)
+            except re.error as exc:
+                raise ValueError(f"invalid redaction regex {pattern!r}: {exc}") from exc
+        return patterns
 
 
 class AgentConfig(StrictModel):
