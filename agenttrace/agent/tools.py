@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import asyncio
 import fnmatch
+import os
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Protocol
@@ -164,3 +166,118 @@ class ToolRegistry:
 
 def inspection_tools() -> list[AgentTool]:
     return [ReadFileTool(), ListDirectoryTool(), SearchTool()]
+
+
+class WriteFileArguments(ToolArguments):
+    path: str
+    content: str
+
+
+class WriteFileTool(ToolBase):
+    name = "write_file"
+    description = "Create or replace a UTF-8 file inside the repository workspace."
+    arguments_model = WriteFileArguments
+
+    async def execute(self, workspace: RepositoryWorkspace, arguments: ToolArguments) -> ToolExecution:
+        args = WriteFileArguments.model_validate(arguments)
+        workspace.require_writable()
+        path = workspace.resolve(args.path, must_exist=False)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(args.content, encoding="utf-8")
+        return ToolExecution(ToolStatus.SUCCEEDED, f"wrote {len(args.content.encode())} bytes")
+
+
+class ReplaceTextArguments(ToolArguments):
+    path: str
+    old: str = Field(min_length=1)
+    new: str
+    expected_replacements: int = Field(default=1, gt=0, le=1000)
+
+
+class ReplaceTextTool(ToolBase):
+    name = "replace_text"
+    description = "Replace an exact text fragment with an expected occurrence count."
+    arguments_model = ReplaceTextArguments
+
+    async def execute(self, workspace: RepositoryWorkspace, arguments: ToolArguments) -> ToolExecution:
+        args = ReplaceTextArguments.model_validate(arguments)
+        workspace.require_writable()
+        path = workspace.resolve(args.path)
+        content = path.read_text(encoding="utf-8")
+        actual = content.count(args.old)
+        if actual != args.expected_replacements:
+            return ToolExecution(
+                ToolStatus.FAILED,
+                f"expected {args.expected_replacements} occurrences, found {actual}",
+            )
+        path.write_text(content.replace(args.old, args.new), encoding="utf-8")
+        return ToolExecution(ToolStatus.SUCCEEDED, f"replaced {actual} occurrence(s)")
+
+
+class RunCommandArguments(ToolArguments):
+    argv: list[str] = Field(min_length=1, max_length=64)
+    cwd: str = "."
+
+
+class RunCommandTool(ToolBase):
+    name = "run_command"
+    description = "Run one allowlisted command without a shell, with timeout and output limits."
+    arguments_model = RunCommandArguments
+
+    def __init__(
+        self,
+        allowed_commands: list[str],
+        *,
+        timeout_seconds: float,
+        max_output_bytes: int,
+    ) -> None:
+        self.allowed_commands = frozenset(allowed_commands)
+        self.timeout_seconds = timeout_seconds
+        self.max_output_bytes = max_output_bytes
+
+    async def execute(self, workspace: RepositoryWorkspace, arguments: ToolArguments) -> ToolExecution:
+        args = RunCommandArguments.model_validate(arguments)
+        executable = Path(args.argv[0]).name
+        if executable not in self.allowed_commands or args.argv[0] != executable:
+            return ToolExecution(ToolStatus.DENIED, f"command is not allowlisted: {args.argv[0]}")
+        cwd = workspace.resolve(args.cwd)
+        if not cwd.is_dir():
+            return ToolExecution(ToolStatus.FAILED, f"command cwd is not a directory: {args.cwd}")
+        environment = {
+            key: value
+            for key, value in os.environ.items()
+            if key in {"PATH", "LANG", "LC_ALL", "PYTHONPATH", "VIRTUAL_ENV"}
+        }
+        process = await asyncio.create_subprocess_exec(
+            *args.argv,
+            cwd=cwd,
+            env=environment,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.STDOUT,
+            start_new_session=True,
+        )
+        try:
+            stdout, _ = await asyncio.wait_for(process.communicate(), timeout=self.timeout_seconds)
+        except TimeoutError:
+            process.kill()
+            await process.wait()
+            return ToolExecution(ToolStatus.TIMEOUT, f"timed out after {self.timeout_seconds}s")
+        truncated = len(stdout) > self.max_output_bytes
+        output = stdout[: self.max_output_bytes].decode("utf-8", errors="replace")
+        status = ToolStatus.SUCCEEDED if process.returncode == 0 else ToolStatus.FAILED
+        return ToolExecution(status, f"exit_code={process.returncode}\n{output}", truncated)
+
+
+def default_tools(
+    allowed_commands: list[str], *, timeout_seconds: float, max_output_bytes: int
+) -> list[AgentTool]:
+    return [
+        *inspection_tools(),
+        WriteFileTool(),
+        ReplaceTextTool(),
+        RunCommandTool(
+            allowed_commands,
+            timeout_seconds=timeout_seconds,
+            max_output_bytes=max_output_bytes,
+        ),
+    ]
