@@ -3,14 +3,13 @@
 from __future__ import annotations
 
 import json
-import platform
 from collections.abc import Callable
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from agenttrace import __version__
 from agenttrace.benchmarking.matrix import BenchmarkCase, ordered_cases
+from agenttrace.benchmarking.provenance import capture_provenance
 from agenttrace.config import BenchmarkConfig, EndpointConfig
 from agenttrace.instrumentation.tokens import TokenCounter, WhitespaceTokenCounter
 from agenttrace.replay.engine import ReplayEngine
@@ -19,7 +18,6 @@ from agenttrace.replay.models import ReplaySessionResult, WorkloadRequest
 from agenttrace.replay.transform import transform_workload
 from agenttrace.serving.client import InferenceClient
 from agenttrace.serving.metrics import ServerMetricsSnapshot, VLLMMetricsAdapter
-from agenttrace.telemetry.device import collect_device_telemetry
 from agenttrace.telemetry.tracing import trace_span
 
 ClientFactory = Callable[[EndpointConfig], InferenceClient]
@@ -110,12 +108,9 @@ class BenchmarkRunner:
         metadata = {
             "experiment_id": self.config.experiment_id,
             "started_at": started_at.isoformat(),
-            "agenttrace_version": __version__,
-            "python_version": platform.python_version(),
-            "platform": platform.platform(),
+            "provenance": capture_provenance(),
             "tokenizer": self.counter.identity,
             "token_count_method": self.counter.method,
-            "device": collect_device_telemetry().as_dict(),
             "configuration": config,
             "server_configuration": self.config.server_metadata,
             "warmups_excluded_from_measurements": True,
