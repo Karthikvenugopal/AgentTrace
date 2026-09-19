@@ -128,8 +128,8 @@ def analyze_experiment(experiment_dir: Path, *, source_trace: Path | None = None
     }
     if chart_results["tool_wait_vs_server_utilization"].startswith("unavailable"):
         unavailable["tool_wait_vs_server_utilization"] = (
-            "requires aligned time-series vLLM utilization samples; before/after counters are "
-            "not sufficient for a utilization curve"
+            "requires at least two tool-wait settings and aligned vLLM GPU KV-cache samples; "
+            "the current experiment did not provide both"
         )
     result = {
         "experiment_id": aggregates["experiment_id"],

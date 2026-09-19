@@ -2,7 +2,11 @@
   "charts": {
     "concurrency_vs_generation_throughput": "results/mock-matrix-demo/charts/concurrency-vs-output-throughput.png",
     "concurrency_vs_latency": "results/mock-matrix-demo/charts/concurrency-vs-latency.png",
-    "context_vs_ttft": "results/mock-matrix-demo/charts/context-vs-ttft.png"
+    "context_vs_ttft": "results/mock-matrix-demo/charts/context-vs-ttft.png",
+    "execution_length_vs_cumulative_prompt_tokens": "results/mock-matrix-demo/charts/execution-length-vs-cumulative-prompt-tokens.png",
+    "subagent_activity_vs_latency": "results/mock-matrix-demo/charts/subagent-activity-vs-latency.png",
+    "subagent_arrivals_vs_latency": "unavailable: source trace has no parent-child agent activity",
+    "tool_wait_vs_server_utilization": "unavailable: requires two tool-wait settings and sampled GPU KV-cache usage"
   },
   "experiment_id": "mock-matrix-demo",
   "interpretation": "This file reports observations only. It does not claim causal improvements or generalize beyond the recorded configuration.",
@@ -22,18 +26,18 @@
           "workload_type": "parameterized"
         },
         "failed_attempts": 0,
-        "input_token_throughput_per_second": 14820.067877068694,
+        "input_token_throughput_per_second": 13019.210964616734,
         "latency_seconds": {
           "count": 8,
-          "maximum": 0.033438667000154965,
-          "median": 0.03294816650009125,
-          "minimum": 0.032831542000167246,
+          "maximum": 0.03366525000001275,
+          "median": 0.03302816699988398,
+          "minimum": 0.03201337499967849,
           "p95": null,
           "p99": null
         },
-        "measured_duration_seconds": 0.138191,
-        "output_token_throughput_per_second": 926.2542423167934,
-        "request_throughput_per_second": 57.890890144799585,
+        "measured_duration_seconds": 0.157306,
+        "output_token_throughput_per_second": 813.7006852885459,
+        "request_throughput_per_second": 50.856292830534116,
         "retried_attempts": 0,
         "successful_requests": 8,
         "timeout_attempts": 0,
@@ -42,9 +46,9 @@
         "trials": 2,
         "ttft_seconds": {
           "count": 8,
-          "maximum": 0.014172250000228814,
-          "median": 0.013806687499936743,
-          "minimum": 0.013581749999957538,
+          "maximum": 0.014320750000024418,
+          "median": 0.013875500499807458,
+          "minimum": 0.01358158299990464,
           "p95": null,
           "p99": null
         }
@@ -62,18 +66,18 @@
           "workload_type": "parameterized"
         },
         "failed_attempts": 0,
-        "input_token_throughput_per_second": 30458.513660226956,
+        "input_token_throughput_per_second": 21901.86935877144,
         "latency_seconds": {
           "count": 8,
-          "maximum": 0.03341866700020546,
-          "median": 0.03197949950003931,
-          "minimum": 0.030673707999994804,
+          "maximum": 0.03784229100028824,
+          "median": 0.03661029199997756,
+          "minimum": 0.035075624999990396,
           "p95": null,
           "p99": null
         },
-        "measured_duration_seconds": 0.067239,
-        "output_token_throughput_per_second": 1903.6571037641847,
-        "request_throughput_per_second": 118.97856898526155,
+        "measured_duration_seconds": 0.09350800000000001,
+        "output_token_throughput_per_second": 1368.866834923215,
+        "request_throughput_per_second": 85.55417718270094,
         "retried_attempts": 0,
         "successful_requests": 8,
         "timeout_attempts": 0,
@@ -82,9 +86,9 @@
         "trials": 2,
         "ttft_seconds": {
           "count": 8,
-          "maximum": 0.01387404199977027,
-          "median": 0.01256372900002134,
-          "minimum": 0.01120745900016118,
+          "maximum": 0.01874604200020258,
+          "median": 0.017201020500124287,
+          "minimum": 0.015809707999778766,
           "p95": null,
           "p99": null
         }
@@ -102,18 +106,18 @@
           "workload_type": "parameterized"
         },
         "failed_attempts": 0,
-        "input_token_throughput_per_second": 3166.6707899359244,
+        "input_token_throughput_per_second": 2948.9690127865456,
         "latency_seconds": {
           "count": 4,
-          "maximum": 0.04029175000005125,
-          "median": 0.03417345799994109,
-          "minimum": 0.03189212500001304,
+          "maximum": 0.033366583000315586,
+          "median": 0.033089124999833075,
+          "minimum": 0.03285374999995838,
           "p95": null,
           "p99": null
         },
-        "measured_duration_seconds": 0.080842,
-        "output_token_throughput_per_second": 791.6676974839811,
-        "request_throughput_per_second": 49.47923109274882,
+        "measured_duration_seconds": 0.08681,
+        "output_token_throughput_per_second": 737.2422531966364,
+        "request_throughput_per_second": 46.077640824789775,
         "retried_attempts": 0,
         "successful_requests": 4,
         "timeout_attempts": 0,
@@ -122,9 +126,9 @@
         "trials": 2,
         "ttft_seconds": {
           "count": 4,
-          "maximum": 0.021213665999766818,
-          "median": 0.015130020500009778,
-          "minimum": 0.013409584000328323,
+          "maximum": 0.014079250000122556,
+          "median": 0.013913708500012945,
+          "minimum": 0.01377462500022375,
           "p95": null,
           "p99": null
         }
@@ -142,18 +146,18 @@
           "workload_type": "parameterized"
         },
         "failed_attempts": 0,
-        "input_token_throughput_per_second": 1887.9334503458754,
+        "input_token_throughput_per_second": 1652.401791823193,
         "latency_seconds": {
           "count": 4,
-          "maximum": 0.03258920799999032,
-          "median": 0.03252089650004564,
-          "minimum": 0.03239587500002017,
+          "maximum": 0.0326930840001296,
+          "median": 0.03255704200000764,
+          "minimum": 0.032502875000318454,
           "p95": null,
           "p99": null
         },
-        "measured_duration_seconds": 0.135598,
-        "output_token_throughput_per_second": 471.98336258646884,
-        "request_throughput_per_second": 29.498960161654303,
+        "measured_duration_seconds": 0.154926,
+        "output_token_throughput_per_second": 413.10044795579824,
+        "request_throughput_per_second": 25.81877799723739,
         "retried_attempts": 0,
         "successful_requests": 4,
         "timeout_attempts": 0,
@@ -162,9 +166,9 @@
         "trials": 2,
         "ttft_seconds": {
           "count": 4,
-          "maximum": 0.013469167000039306,
-          "median": 0.013426749500013102,
-          "minimum": 0.013358333999804017,
+          "maximum": 0.013591667000127927,
+          "median": 0.013482708500077933,
+          "minimum": 0.013453374999699008,
           "p95": null,
           "p99": null
         }
@@ -182,18 +186,18 @@
           "workload_type": "parameterized"
         },
         "failed_attempts": 0,
-        "input_token_throughput_per_second": 3585.5346088125716,
+        "input_token_throughput_per_second": 3254.0787207403027,
         "latency_seconds": {
           "count": 8,
-          "maximum": 0.037598542000068846,
-          "median": 0.033188145999929475,
-          "minimum": 0.03274562499973399,
+          "maximum": 0.03325395899992145,
+          "median": 0.03302002149985128,
+          "minimum": 0.03040483300037522,
           "p95": null,
           "p99": null
         },
-        "measured_duration_seconds": 0.142796,
-        "output_token_throughput_per_second": 896.3836522031429,
-        "request_throughput_per_second": 56.02397826269643,
+        "measured_duration_seconds": 0.157341,
+        "output_token_throughput_per_second": 813.5196801850757,
+        "request_throughput_per_second": 50.84498001156723,
         "retried_attempts": 0,
         "successful_requests": 8,
         "timeout_attempts": 0,
@@ -202,9 +206,9 @@
         "trials": 2,
         "ttft_seconds": {
           "count": 8,
-          "maximum": 0.018608249999942927,
-          "median": 0.013974896000036097,
-          "minimum": 0.013586832999862963,
+          "maximum": 0.014182458000050246,
+          "median": 0.013973896000152308,
+          "minimum": 0.01134425000009287,
           "p95": null,
           "p99": null
         }
@@ -222,18 +226,18 @@
           "workload_type": "parameterized"
         },
         "failed_attempts": 0,
-        "input_token_throughput_per_second": 7358.96514552641,
+        "input_token_throughput_per_second": 5574.1238718386985,
         "latency_seconds": {
           "count": 8,
-          "maximum": 0.033834709000075236,
-          "median": 0.03270274999999856,
-          "minimum": 0.030800250000083906,
+          "maximum": 0.039010082999993756,
+          "median": 0.033511937500179556,
+          "minimum": 0.03312966700013931,
           "p95": null,
           "p99": null
         },
-        "measured_duration_seconds": 0.069575,
-        "output_token_throughput_per_second": 1839.7412863816025,
-        "request_throughput_per_second": 114.98383039885016,
+        "measured_duration_seconds": 0.091853,
+        "output_token_throughput_per_second": 1393.5309679596746,
+        "request_throughput_per_second": 87.09568549747966,
         "retried_attempts": 0,
         "successful_requests": 8,
         "timeout_attempts": 0,
@@ -242,9 +246,9 @@
         "trials": 2,
         "ttft_seconds": {
           "count": 8,
-          "maximum": 0.014040749999821855,
-          "median": 0.013640917000202535,
-          "minimum": 0.011585374999867781,
+          "maximum": 0.01942379100000835,
+          "median": 0.0142748749999555,
+          "minimum": 0.01384425000014744,
           "p95": null,
           "p99": null
         }
@@ -262,18 +266,18 @@
           "workload_type": "parameterized"
         },
         "failed_attempts": 0,
-        "input_token_throughput_per_second": 7530.463814797655,
+        "input_token_throughput_per_second": 6499.400201836842,
         "latency_seconds": {
           "count": 4,
-          "maximum": 0.03274429200018858,
-          "median": 0.03258966649991635,
-          "minimum": 0.03251025000008667,
+          "maximum": 0.03295654099974854,
+          "median": 0.03282185399984883,
+          "minimum": 0.03268850000040402,
           "p95": null,
           "p99": null
         },
-        "measured_duration_seconds": 0.13598100000000002,
-        "output_token_throughput_per_second": 470.6539884248534,
-        "request_throughput_per_second": 29.41587427655334,
+        "measured_duration_seconds": 0.157553,
+        "output_token_throughput_per_second": 406.2125126148026,
+        "request_throughput_per_second": 25.388282038425164,
         "retried_attempts": 0,
         "successful_requests": 4,
         "timeout_attempts": 0,
@@ -282,9 +286,9 @@
         "trials": 2,
         "ttft_seconds": {
           "count": 4,
-          "maximum": 0.013545416999932058,
-          "median": 0.013519062500108703,
-          "minimum": 0.013457915999879333,
+          "maximum": 0.013788792000013927,
+          "median": 0.013707458500221037,
+          "minimum": 0.013545791999604262,
           "p95": null,
           "p99": null
         }
@@ -302,18 +306,18 @@
           "workload_type": "parameterized"
         },
         "failed_attempts": 0,
-        "input_token_throughput_per_second": 1886.6255932553133,
+        "input_token_throughput_per_second": 1664.5859342488557,
         "latency_seconds": {
           "count": 4,
-          "maximum": 0.03265241700000843,
-          "median": 0.0325100829998064,
-          "minimum": 0.03245670800015432,
+          "maximum": 0.03269666699998197,
+          "median": 0.032576395500200306,
+          "minimum": 0.03242870799977027,
           "p95": null,
           "p99": null
         },
-        "measured_duration_seconds": 0.135692,
-        "output_token_throughput_per_second": 471.65639831382833,
-        "request_throughput_per_second": 29.47852489461427,
+        "measured_duration_seconds": 0.15379199999999998,
+        "output_token_throughput_per_second": 416.1464835622139,
+        "request_throughput_per_second": 26.00915522263837,
         "retried_attempts": 0,
         "successful_requests": 4,
         "timeout_attempts": 0,
@@ -322,9 +326,9 @@
         "trials": 2,
         "ttft_seconds": {
           "count": 4,
-          "maximum": 0.013561082999785867,
-          "median": 0.013445812999862028,
-          "minimum": 0.013438791999760724,
+          "maximum": 0.01363687499997468,
+          "median": 0.013493333499809523,
+          "minimum": 0.013400124999861873,
           "p95": null,
           "p99": null
         }
@@ -342,18 +346,18 @@
           "workload_type": "parameterized"
         },
         "failed_attempts": 0,
-        "input_token_throughput_per_second": 14661.874829970933,
+        "input_token_throughput_per_second": 11953.95858140132,
         "latency_seconds": {
           "count": 4,
-          "maximum": 0.032449208999878465,
-          "median": 0.03240474949984673,
-          "minimum": 0.03220991699981823,
+          "maximum": 0.033018332999745326,
+          "median": 0.03262139599996772,
+          "minimum": 0.03214245799972559,
           "p95": null,
           "p99": null
         },
-        "measured_duration_seconds": 0.069841,
-        "output_token_throughput_per_second": 916.3671768731833,
-        "request_throughput_per_second": 57.27294855457396,
+        "measured_duration_seconds": 0.085662,
+        "output_token_throughput_per_second": 747.1224113375825,
+        "request_throughput_per_second": 46.69515070859891,
         "retried_attempts": 0,
         "successful_requests": 4,
         "timeout_attempts": 0,
@@ -362,9 +366,9 @@
         "trials": 2,
         "ttft_seconds": {
           "count": 4,
-          "maximum": 0.01338241699977516,
-          "median": 0.013340375000097993,
-          "minimum": 0.013122541999564419,
+          "maximum": 0.014065040999867051,
+          "median": 0.013908645999890723,
+          "minimum": 0.01381366599980538,
           "p95": null,
           "p99": null
         }
@@ -382,18 +386,18 @@
           "workload_type": "parameterized"
         },
         "failed_attempts": 0,
-        "input_token_throughput_per_second": 13680.329182920963,
+        "input_token_throughput_per_second": 11346.637561359381,
         "latency_seconds": {
           "count": 4,
-          "maximum": 0.03715804199964623,
-          "median": 0.03247666650008796,
-          "minimum": 0.032394207999914215,
+          "maximum": 0.036889416000121855,
+          "median": 0.03492883350008924,
+          "minimum": 0.033054250000077445,
           "p95": null,
           "p99": null
         },
-        "measured_duration_seconds": 0.074852,
-        "output_token_throughput_per_second": 855.0205739325602,
-        "request_throughput_per_second": 53.43878587078501,
+        "measured_duration_seconds": 0.090247,
+        "output_token_throughput_per_second": 709.1648475849613,
+        "request_throughput_per_second": 44.32280297406008,
         "retried_attempts": 0,
         "successful_requests": 4,
         "timeout_attempts": 0,
@@ -402,9 +406,9 @@
         "trials": 2,
         "ttft_seconds": {
           "count": 4,
-          "maximum": 0.018429540999932215,
-          "median": 0.013378957999975682,
-          "minimum": 0.013326291999874229,
+          "maximum": 0.018229666999559413,
+          "median": 0.016022937499883483,
+          "minimum": 0.013949333000255137,
           "p95": null,
           "p99": null
         }
@@ -422,18 +426,18 @@
           "workload_type": "parameterized"
         },
         "failed_attempts": 0,
-        "input_token_throughput_per_second": 3658.3448847478453,
+        "input_token_throughput_per_second": 2967.703044214138,
         "latency_seconds": {
           "count": 4,
-          "maximum": 0.03245529200012243,
-          "median": 0.03241475000027094,
-          "minimum": 0.03240704200015898,
+          "maximum": 0.03319870799987257,
+          "median": 0.03308325049988525,
+          "minimum": 0.03302566599995771,
           "p95": null,
           "p99": null
         },
-        "measured_duration_seconds": 0.06997700000000001,
-        "output_token_throughput_per_second": 914.5862211869613,
-        "request_throughput_per_second": 57.16163882418508,
+        "measured_duration_seconds": 0.086262,
+        "output_token_throughput_per_second": 741.9257610535345,
+        "request_throughput_per_second": 46.37036006584591,
         "retried_attempts": 0,
         "successful_requests": 4,
         "timeout_attempts": 0,
@@ -442,9 +446,9 @@
         "trials": 2,
         "ttft_seconds": {
           "count": 4,
-          "maximum": 0.013393875000019762,
-          "median": 0.013384395499997481,
-          "minimum": 0.013335374999769556,
+          "maximum": 0.014118999999936932,
+          "median": 0.01391889599995011,
+          "minimum": 0.013868959000319592,
           "p95": null,
           "p99": null
         }
@@ -462,18 +466,18 @@
           "workload_type": "parameterized"
         },
         "failed_attempts": 0,
-        "input_token_throughput_per_second": 15191.30060676191,
+        "input_token_throughput_per_second": 12605.869608036242,
         "latency_seconds": {
           "count": 8,
-          "maximum": 0.03292004199965959,
-          "median": 0.03235599999970873,
-          "minimum": 0.031246292000105313,
+          "maximum": 0.03863141700003325,
+          "median": 0.03307693750002727,
+          "minimum": 0.03240637500039156,
           "p95": null,
           "p99": null
         },
-        "measured_duration_seconds": 0.134814,
-        "output_token_throughput_per_second": 949.4562879226194,
-        "request_throughput_per_second": 59.34101799516371,
+        "measured_duration_seconds": 0.162464,
+        "output_token_throughput_per_second": 787.8668505022652,
+        "request_throughput_per_second": 49.24167815639157,
         "retried_attempts": 0,
         "successful_requests": 8,
         "timeout_attempts": 0,
@@ -482,9 +486,9 @@
         "trials": 2,
         "ttft_seconds": {
           "count": 8,
-          "maximum": 0.013859707999927195,
-          "median": 0.013626791499973478,
-          "minimum": 0.012154125000051863,
+          "maximum": 0.019455999999991036,
+          "median": 0.01393093749993568,
+          "minimum": 0.013709333999941009,
           "p95": null,
           "p99": null
         }
@@ -502,18 +506,18 @@
           "workload_type": "parameterized"
         },
         "failed_attempts": 0,
-        "input_token_throughput_per_second": 7028.718906155621,
+        "input_token_throughput_per_second": 5434.551861758588,
         "latency_seconds": {
           "count": 8,
-          "maximum": 0.03656804199999897,
-          "median": 0.032801500000005035,
-          "minimum": 0.030848208999941562,
+          "maximum": 0.039126000000123895,
+          "median": 0.03621508350033764,
+          "minimum": 0.03323279200003526,
           "p95": null,
           "p99": null
         },
-        "measured_duration_seconds": 0.07284399999999999,
-        "output_token_throughput_per_second": 1757.1797265389052,
-        "request_throughput_per_second": 109.82373290868158,
+        "measured_duration_seconds": 0.09421199999999999,
+        "output_token_throughput_per_second": 1358.637965439647,
+        "request_throughput_per_second": 84.91487283997793,
         "retried_attempts": 0,
         "successful_requests": 8,
         "timeout_attempts": 0,
@@ -522,9 +526,9 @@
         "trials": 2,
         "ttft_seconds": {
           "count": 8,
-          "maximum": 0.018036166000001685,
-          "median": 0.013839208499803135,
-          "minimum": 0.011319250000269676,
+          "maximum": 0.020175416999791196,
+          "median": 0.017138896000005843,
+          "minimum": 0.01417025000000649,
           "p95": null,
           "p99": null
         }
@@ -542,18 +546,18 @@
           "workload_type": "parameterized"
         },
         "failed_attempts": 0,
-        "input_token_throughput_per_second": 28673.83512544803,
+        "input_token_throughput_per_second": 21903.27479626104,
         "latency_seconds": {
           "count": 8,
-          "maximum": 0.03312404200005403,
-          "median": 0.032995708500038745,
-          "minimum": 0.032723750000059226,
+          "maximum": 0.03801704199986489,
+          "median": 0.03411318750022474,
+          "minimum": 0.0335416670000086,
           "p95": null,
           "p99": null
         },
-        "measured_duration_seconds": 0.071424,
-        "output_token_throughput_per_second": 1792.1146953405018,
-        "request_throughput_per_second": 112.00716845878136,
+        "measured_duration_seconds": 0.093502,
+        "output_token_throughput_per_second": 1368.954674766315,
+        "request_throughput_per_second": 85.55966717289469,
         "retried_attempts": 0,
         "successful_requests": 8,
         "timeout_attempts": 0,
@@ -562,9 +566,9 @@
         "trials": 2,
         "ttft_seconds": {
           "count": 8,
-          "maximum": 0.013895417000185262,
-          "median": 0.013704728999982763,
-          "minimum": 0.013598458000160463,
+          "maximum": 0.01881204199980857,
+          "median": 0.01466052050000144,
+          "minimum": 0.014274374999786232,
           "p95": null,
           "p99": null
         }
@@ -582,18 +586,18 @@
           "workload_type": "parameterized"
         },
         "failed_attempts": 0,
-        "input_token_throughput_per_second": 3762.630902076061,
+        "input_token_throughput_per_second": 3286.855147266517,
         "latency_seconds": {
           "count": 8,
-          "maximum": 0.03340787499973885,
-          "median": 0.03258402100004787,
-          "minimum": 0.03139187499982654,
+          "maximum": 0.033013041999765846,
+          "median": 0.03258374999973057,
+          "minimum": 0.0319216249999954,
           "p95": null,
           "p99": null
         },
-        "measured_duration_seconds": 0.136075,
-        "output_token_throughput_per_second": 940.6577255190152,
-        "request_throughput_per_second": 58.79110784493845,
+        "measured_duration_seconds": 0.15577200000000002,
+        "output_token_throughput_per_second": 821.7137868166293,
+        "request_throughput_per_second": 51.35711167603933,
         "retried_attempts": 0,
         "successful_requests": 8,
         "timeout_attempts": 0,
@@ -602,9 +606,9 @@
         "trials": 2,
         "ttft_seconds": {
           "count": 8,
-          "maximum": 0.014122749999842199,
-          "median": 0.013645353999663712,
-          "minimum": 0.013379958999848895,
+          "maximum": 0.014394999999694846,
+          "median": 0.013857062499937456,
+          "minimum": 0.013372666999657667,
           "p95": null,
           "p99": null
         }
@@ -622,18 +626,18 @@
           "workload_type": "parameterized"
         },
         "failed_attempts": 0,
-        "input_token_throughput_per_second": 7732.445310317225,
+        "input_token_throughput_per_second": 6573.288313155564,
         "latency_seconds": {
           "count": 4,
-          "maximum": 0.032761458000095445,
-          "median": 0.03200652050009012,
-          "minimum": 0.03008620799982964,
+          "maximum": 0.03280858400012221,
+          "median": 0.03258531250003216,
+          "minimum": 0.032544791999953304,
           "p95": null,
           "p99": null
         },
-        "measured_duration_seconds": 0.13242900000000002,
-        "output_token_throughput_per_second": 483.2778318948266,
-        "request_throughput_per_second": 30.204864493426662,
+        "measured_duration_seconds": 0.155782,
+        "output_token_throughput_per_second": 410.8305195722227,
+        "request_throughput_per_second": 25.67690747326392,
         "retried_attempts": 0,
         "successful_requests": 4,
         "timeout_attempts": 0,
@@ -642,9 +646,9 @@
         "trials": 2,
         "ttft_seconds": {
           "count": 4,
-          "maximum": 0.013616791999993438,
-          "median": 0.012916145999952278,
-          "minimum": 0.0109512909998557,
+          "maximum": 0.013679249999768217,
+          "median": 0.013510395499906735,
+          "minimum": 0.01346770899999683,
           "p95": null,
           "p99": null
         }
@@ -671,6 +675,7 @@
       "p95": null,
       "p99": null
     },
+    "maximum_active_agent_concurrency": 1,
     "maximum_inference_request_concurrency": 1,
     "per_agent": {
       "agent-1": {
@@ -719,6 +724,6 @@
   },
   "unavailable_analyses": {
     "request_level_server_queueing": "vLLM Prometheus queue histograms are aggregate and cannot be assigned exactly to individual requests without backend-supported correlation",
-    "tool_wait_vs_server_utilization": "requires aligned time-series vLLM utilization samples; before/after counters are not sufficient for a utilization curve"
+    "tool_wait_vs_server_utilization": "requires at least two tool-wait settings and aligned vLLM GPU KV-cache samples; the current experiment did not provide both"
   }
 }
