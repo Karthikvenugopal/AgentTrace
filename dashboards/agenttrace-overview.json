@@ -1,0 +1,35 @@
+{
+  "annotations": {"list": []},
+  "editable": false,
+  "panels": [
+    {
+      "type": "timeseries",
+      "title": "Client request rate",
+      "targets": [{"expr": "sum by (component, status) (rate(agenttrace_client_requests_total[1m]))"}],
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0}
+    },
+    {
+      "type": "timeseries",
+      "title": "Client active requests",
+      "targets": [{"expr": "sum by (component) (agenttrace_client_active_requests)"}],
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0}
+    },
+    {
+      "type": "timeseries",
+      "title": "vLLM running and waiting requests",
+      "targets": [
+        {"expr": "sum({__name__=~\"vllm[:_]num_requests_running\"})", "legendFormat": "running"},
+        {"expr": "sum({__name__=~\"vllm[:_]num_requests_waiting\"})", "legendFormat": "waiting"}
+      ],
+      "gridPos": {"h": 8, "w": 24, "x": 0, "y": 8}
+    }
+  ],
+  "schemaVersion": 39,
+  "tags": ["agenttrace", "client", "vllm"],
+  "templating": {"list": []},
+  "time": {"from": "now-15m", "to": "now"},
+  "timezone": "browser",
+  "title": "AgentTrace overview",
+  "uid": "agenttrace-overview",
+  "version": 1
+}
