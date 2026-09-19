@@ -110,17 +110,20 @@ class ReplayEngine:
             submitted_at = datetime.now(UTC)
             started = time.monotonic()
             try:
-                response = await self.client.complete(
-                    InferenceRequest(
-                        request_id=replay_request_id,
-                        model=self.config.endpoint.model or request.model,
-                        messages=request.messages,
-                        temperature=float(request.sampling_parameters.get("temperature", 0.0)),
-                        top_p=float(request.sampling_parameters.get("top_p", 1.0)),
-                        max_tokens=self.config.output_tokens or request.expected_output_tokens,
-                        seed=self.config.seed,
-                        stream=True,
-                    )
+                response = await asyncio.wait_for(
+                    self.client.complete(
+                        InferenceRequest(
+                            request_id=replay_request_id,
+                            model=self.config.endpoint.model or request.model,
+                            messages=request.messages,
+                            temperature=float(request.sampling_parameters.get("temperature", 0.0)),
+                            top_p=float(request.sampling_parameters.get("top_p", 1.0)),
+                            max_tokens=self.config.output_tokens or request.expected_output_tokens,
+                            seed=self.config.seed,
+                            stream=True,
+                        )
+                    ),
+                    timeout=self.config.request_timeout_seconds,
                 )
                 completed_at = datetime.now(UTC)
                 attempts.append(
@@ -148,8 +151,8 @@ class ReplayEngine:
                     )
                 )
                 break
-            except InferenceError as exc:
-                status = "timeout" if "timeout" in str(exc).lower() else "failed"
+            except (InferenceError, TimeoutError) as exc:
+                status = "timeout" if isinstance(exc, TimeoutError) else "failed"
                 attempts.append(
                     ReplayAttempt(
                         replay_session_id=session_id,
@@ -171,6 +174,6 @@ class ReplayEngine:
                         error_message=str(exc),
                     )
                 )
-                if not exc.retryable:
+                if isinstance(exc, InferenceError) and not exc.retryable:
                     break
         return attempts
