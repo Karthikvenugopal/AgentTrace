@@ -112,6 +112,12 @@ class BenchmarkAxis(StrictModel):
     patterns: list[Literal["sequential", "concurrent", "parent_subagents"]] = Field(
         default_factory=lambda: ["sequential", "concurrent"]
     )
+    workload_types: list[Literal["recorded", "synthetic", "parameterized"]] = Field(
+        default_factory=lambda: ["parameterized"]
+    )
+    replay_modes: list[Literal["open_loop", "closed_loop"]] = Field(
+        default_factory=lambda: ["open_loop", "closed_loop"]
+    )
 
 
 class BenchmarkConfig(StrictModel):
@@ -123,6 +129,7 @@ class BenchmarkConfig(StrictModel):
     warmup_requests: int = Field(default=1, ge=0)
     repetitions: int = Field(default=3, gt=0)
     randomize_order: bool = True
+    rotate_order_each_repetition: bool = True
     seed: int = 7
     server_metadata: dict[str, Any] = Field(default_factory=dict)
 
