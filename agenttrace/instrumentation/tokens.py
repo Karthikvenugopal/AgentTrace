@@ -81,6 +81,12 @@ class TokenAccounting:
     breakdown: PromptTokenBreakdown
 
 
+def build_token_counter(tokenizer: str | None) -> TokenCounter:
+    """Use an exact configured tokenizer, or an explicitly labeled test estimate."""
+
+    return TransformersTokenCounter(tokenizer) if tokenizer else WhitespaceTokenCounter()
+
+
 def count_messages(messages: list[ChatMessage], counter: TokenCounter) -> TokenAccounting:
     counts = {role: 0 for role in MessageRole}
     for message in messages:

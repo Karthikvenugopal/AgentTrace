@@ -82,6 +82,7 @@ class AgentConfig(StrictModel):
     agent_id: str = "agent-1"
     parent_agent_id: str | None = None
     task: str
+    tokenizer: str | None = None
     endpoint: EndpointConfig = Field(default_factory=EndpointConfig)
     sampling: SamplingConfig = Field(default_factory=SamplingConfig)
     limits: AgentLimits = Field(default_factory=AgentLimits)
@@ -107,6 +108,7 @@ class ReplayConfig(StrictModel):
     request_timeout_seconds: float = Field(default=120.0, gt=0)
     retry_count: int = Field(default=1, ge=0, le=10)
     seed: int = 7
+    tokenizer: str | None = None
     prompt_tokens: int | None = Field(default=None, gt=0)
     output_tokens: int | None = Field(default=None, gt=0)
     concurrent_agents: int | None = Field(default=None, gt=0)

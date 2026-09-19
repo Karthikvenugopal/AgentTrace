@@ -23,7 +23,7 @@ from agenttrace.config import (
     SyntheticConfig,
     load_config,
 )
-from agenttrace.instrumentation.tokens import WhitespaceTokenCounter
+from agenttrace.instrumentation.tokens import build_token_counter
 from agenttrace.replay.engine import ReplayEngine
 from agenttrace.replay.loader import load_workload
 from agenttrace.replay.transform import transform_workload, write_transformation_manifest
@@ -134,8 +134,9 @@ def replay_run(
 
     async def execute() -> None:
         workload = load_workload(trace)
+        counter = build_token_counter(settings.tokenizer)
         if settings.mode == "parameterized":
-            workload = transform_workload(workload, settings, WhitespaceTokenCounter())
+            workload = transform_workload(workload, settings, counter)
             write_transformation_manifest(
                 output.with_suffix(".manifest.json"),
                 source_trace=trace,
@@ -143,7 +144,7 @@ def replay_run(
                 config=settings,
                 requests=workload,
             )
-        client = OpenAICompatibleClient(settings.endpoint)
+        client = OpenAICompatibleClient(settings.endpoint, token_counter=counter)
         try:
             engine = ReplayEngine(settings, client)
             if settings.mode == "closed_loop":
@@ -172,13 +173,15 @@ def replay_run(
 @benchmark_app.command("run")
 def benchmark_run(config: Annotated[Path, typer.Option(exists=True, dir_okay=False)]) -> None:
     settings = load_config(config, BenchmarkConfig)
+    counter = build_token_counter(settings.replay.tokenizer)
     metrics_url = os.getenv("AGENTTRACE_VLLM_METRICS_URL")
     metrics = VLLMMetricsAdapter(metrics_url) if metrics_url else None
 
     async def execute() -> None:
         runner = BenchmarkRunner(
             settings,
-            lambda endpoint: OpenAICompatibleClient(endpoint),
+            lambda endpoint: OpenAICompatibleClient(endpoint, token_counter=counter),
+            token_counter=counter,
             server_metrics=metrics,
         )
         directory = await runner.run()

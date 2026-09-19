@@ -15,6 +15,7 @@ replay:
   request_timeout_seconds: 120
   retry_count: 1
   seed: 7
+  tokenizer: Qwen/Qwen2.5-Coder-0.5B-Instruct
   output_tokens: 64
   execution_length: 4
 matrix:

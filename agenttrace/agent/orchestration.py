@@ -9,6 +9,7 @@ from agenttrace.agent.runner import CodingAgent
 from agenttrace.agent.workspace import IsolatedRepository, RepositoryWorkspace
 from agenttrace.config import AgentConfig, EndpointConfig
 from agenttrace.instrumentation.timing import ActiveRequestCounter
+from agenttrace.instrumentation.tokens import build_token_counter
 from agenttrace.models import AgentOutcome
 from agenttrace.serving.client import InferenceClient
 from agenttrace.tracing.session import start_agent_trace
@@ -39,6 +40,7 @@ async def run_agent_group(
                         client,
                         writer,
                         trace_id,
+                        token_counter=build_token_counter(config.tokenizer),
                         active_requests=active_requests,
                     ).run()
             workspace = RepositoryWorkspace(
@@ -50,6 +52,7 @@ async def run_agent_group(
                 client,
                 writer,
                 trace_id,
+                token_counter=build_token_counter(config.tokenizer),
                 active_requests=active_requests,
             ).run()
         finally:

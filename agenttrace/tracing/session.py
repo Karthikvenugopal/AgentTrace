@@ -46,6 +46,7 @@ def start_agent_trace(config: AgentConfig) -> tuple[str, TraceWriter]:
                 platform=platform.platform(),
                 agenttrace_version=__version__,
                 model=config.endpoint.model,
+                tokenizer=config.tokenizer or "agenttrace/whitespace-v1",
             ),
             execution_config=agent_execution_metadata(config),
         )

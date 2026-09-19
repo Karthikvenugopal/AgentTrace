@@ -1,4 +1,8 @@
-from agenttrace.instrumentation.tokens import WhitespaceTokenCounter, count_messages
+from agenttrace.instrumentation.tokens import (
+    WhitespaceTokenCounter,
+    build_token_counter,
+    count_messages,
+)
 from agenttrace.models import ChatMessage, MessageRole
 
 
@@ -23,3 +27,9 @@ def test_constructed_prompt_has_requested_length() -> None:
     counter = WhitespaceTokenCounter()
     text = counter.construct_text(257, "alpha beta gamma")
     assert counter.count(text) == 257
+
+
+def test_unconfigured_counter_is_explicitly_an_estimate() -> None:
+    counter = build_token_counter(None)
+    assert counter.identity == "agenttrace/whitespace-v1"
+    assert counter.method == "whitespace_estimate"
