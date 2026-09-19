@@ -123,6 +123,7 @@ class BenchmarkAxis(StrictModel):
 class BenchmarkConfig(StrictModel):
     experiment_id: str
     source_trace: Path
+    measurement_label: Literal["mock", "real_inference"] = "mock"
     output_dir: Path = Path("results")
     replay: ReplayConfig = Field(default_factory=ReplayConfig)
     matrix: BenchmarkAxis = Field(default_factory=BenchmarkAxis)
