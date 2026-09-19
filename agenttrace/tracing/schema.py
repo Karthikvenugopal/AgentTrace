@@ -93,6 +93,7 @@ class RequestRecord(TraceRecord):
     monotonic_completed: float = Field(ge=0)
     time_since_previous_request_seconds: float | None = Field(default=None, ge=0)
     input_tokens: int = Field(ge=0)
+    context_growth_tokens: int = 0
     output_tokens: int = Field(ge=0)
     server_input_tokens: int | None = Field(default=None, ge=0)
     server_output_tokens: int | None = Field(default=None, ge=0)

@@ -15,6 +15,7 @@ from agenttrace.config import AgentConfig
 from agenttrace.instrumentation.timing import ActiveRequestCounter, snapshot
 from agenttrace.instrumentation.tokens import TokenCounter, WhitespaceTokenCounter, count_messages
 from agenttrace.instrumentation.tools import ToolTraceContext, execute_instrumented_tool
+from agenttrace.instrumentation.requests import RequestSequenceTracker
 from agenttrace.models import (
     AgentOutcome,
     ChatMessage,
@@ -77,7 +78,7 @@ class CodingAgent:
         total_input = 0
         total_output = 0
         budget = ExecutionBudget(self.config.limits, started.monotonic)
-        previous_submission: float | None = None
+        sequence_tracker = RequestSequenceTracker()
         summary = "execution limit reached"
         status = ExecutionStatus.LIMIT_REACHED
         iterations = 0
@@ -119,7 +120,7 @@ class CodingAgent:
                         submitted,
                         completed,
                         concurrency,
-                        previous_submission,
+                        sequence_tracker,
                         exc,
                     )
                     summary = f"inference failed: {exc}"
@@ -155,12 +156,11 @@ class CodingAgent:
                 submitted,
                 completed,
                 concurrency,
-                previous_submission,
+                sequence_tracker,
                 response,
                 output_tokens,
                 tool_ids,
             )
-            previous_submission = submitted.monotonic
             if action is None:
                 continue
             messages.append(ChatMessage(role=MessageRole.ASSISTANT, content=response.content))
@@ -246,8 +246,11 @@ class CodingAgent:
         submitted,
         completed,
         concurrency,
-        previous_submission,
+        sequence_tracker,
     ) -> dict[str, object]:
+        observation = sequence_tracker.observe(
+            prompt_tokens=input_tokens, submitted_monotonic=submitted.monotonic
+        )
         return {
             "experiment_id": self.config.experiment_id,
             "trace_id": self.trace_id,
@@ -262,10 +265,9 @@ class CodingAgent:
             "elapsed_seconds": completed.monotonic - submitted.monotonic,
             "monotonic_started": submitted.monotonic,
             "monotonic_completed": completed.monotonic,
-            "time_since_previous_request_seconds": (
-                None if previous_submission is None else submitted.monotonic - previous_submission
-            ),
+            "time_since_previous_request_seconds": observation.time_since_previous_request_seconds,
             "input_tokens": input_tokens,
+            "context_growth_tokens": observation.growth_tokens,
             "prompt_breakdown": breakdown,
             "tokenizer": self.counter.identity,
             "token_count_method": self.counter.method,
@@ -285,7 +287,7 @@ class CodingAgent:
         submitted,
         completed,
         concurrency,
-        previous_submission,
+        sequence_tracker,
         response,
         output_tokens,
         tool_ids,
@@ -302,7 +304,7 @@ class CodingAgent:
                     submitted,
                     completed,
                     concurrency,
-                    previous_submission,
+                    sequence_tracker,
                 ),
                 output_tokens=output_tokens,
                 server_input_tokens=response.input_tokens,
@@ -334,7 +336,7 @@ class CodingAgent:
         submitted,
         completed,
         concurrency,
-        previous_submission,
+        sequence_tracker,
         error,
     ) -> None:
         status = RequestStatus.TIMEOUT if "timeout" in str(error).lower() else RequestStatus.FAILED
@@ -350,7 +352,7 @@ class CodingAgent:
                     submitted,
                     completed,
                     concurrency,
-                    previous_submission,
+                    sequence_tracker,
                 ),
                 output_tokens=0,
                 status=status,
