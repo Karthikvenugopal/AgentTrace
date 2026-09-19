@@ -18,13 +18,16 @@ class WorkloadRequest(ReplayModel):
     source_trace_id: str
     source_request_id: str
     agent_id: str
+    parent_agent_id: str | None = None
     sequence_number: int = Field(ge=0)
     model: str
     messages: list[ChatMessage]
+    content_token_count: int = Field(ge=0)
     recorded_submission_offset_seconds: float = Field(ge=0)
     recorded_inter_request_seconds: float = Field(ge=0)
     expected_output_tokens: int = Field(gt=0)
     sampling_parameters: dict[str, Any] = Field(default_factory=dict)
+    transformation: dict[str, Any] | None = None
 
 
 class ReplayAttempt(ReplayModel):

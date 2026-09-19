@@ -30,6 +30,7 @@ def load_workload(path: Path) -> list[WorkloadRequest]:
                 sequence_number=request.sequence_number,
                 model=request.model,
                 messages=messages,
+                content_token_count=request.input_tokens,
                 recorded_submission_offset_seconds=(request.submitted_at - origin).total_seconds(),
                 recorded_inter_request_seconds=request.time_since_previous_request_seconds or 0.0,
                 expected_output_tokens=max(1, request.output_tokens),
