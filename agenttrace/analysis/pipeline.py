@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 from collections import defaultdict
+from datetime import datetime
 from itertools import pairwise
 from pathlib import Path
 from typing import Any
@@ -14,7 +15,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
 from agenttrace.benchmarking.aggregate import aggregate_experiment, distribution
-from agenttrace.tracing.schema import AgentRecord, RequestRecord, ToolCallRecord
+from agenttrace.tracing.schema import AgentRecord, OutcomeRecord, RequestRecord, ToolCallRecord
 from agenttrace.tracing.storage import iter_trace
 
 
@@ -23,6 +24,7 @@ def analyze_trace(path: Path) -> dict[str, Any]:
     requests = [record for record in records if isinstance(record, RequestRecord)]
     tools = [record for record in records if isinstance(record, ToolCallRecord)]
     agents = [record for record in records if isinstance(record, AgentRecord)]
+    outcomes = [record for record in records if isinstance(record, OutcomeRecord)]
     concurrency = _concurrency_at_submissions(requests)
     per_agent: dict[str, dict[str, Any]] = {}
     for agent_id in sorted({request.agent_id for request in requests}):
@@ -43,6 +45,7 @@ def analyze_trace(path: Path) -> dict[str, Any]:
         "request_count": len(requests),
         "agent_count": len(agents),
         "subagent_count": sum(agent.parent_agent_id is not None for agent in agents),
+        "maximum_active_agent_concurrency": _maximum_active_agents(agents, outcomes),
         "ttft_seconds": distribution(
             [request.ttft_seconds for request in requests if request.ttft_seconds is not None]
         ),
@@ -96,6 +99,17 @@ def analyze_experiment(experiment_dir: Path, *, source_trace: Path | None = None
             output=charts_dir / "concurrency-vs-output-throughput.png",
         ),
     }
+    if source_trace:
+        chart_results["execution_length_vs_cumulative_prompt_tokens"] = _plot_execution_growth(
+            source_trace,
+            charts_dir / "execution-length-vs-cumulative-prompt-tokens.png",
+            aggregates["experiment_id"],
+        )
+        chart_results["subagent_arrivals_vs_latency"] = _plot_subagent_arrivals(
+            source_trace,
+            charts_dir / "subagent-arrivals-vs-latency.png",
+            aggregates["experiment_id"],
+        )
     unavailable = {
         "tool_wait_vs_server_utilization": (
             "requires aligned time-series vLLM utilization samples; before/after counters are "
@@ -177,3 +191,73 @@ def _cumulative(values: list[int]) -> list[int]:
 
 def _concurrency_at_submissions(requests: list[RequestRecord]) -> list[int]:
     return [request.concurrency_at_submission for request in requests]
+
+
+def _maximum_active_agents(agents: list[AgentRecord], outcomes: list[OutcomeRecord]) -> int:
+    completed = {outcome.agent_id: outcome.completed_at for outcome in outcomes}
+    events: list[tuple[datetime, int]] = []
+    for agent in agents:
+        events.append((agent.started_at, 1))
+        if agent.agent_id in completed:
+            events.append((completed[agent.agent_id], -1))
+    # End events sort before start events at the same timestamp.
+    events.sort(key=lambda event: (event[0], event[1]))
+    active = maximum = 0
+    for _, delta in events:
+        active += delta
+        maximum = max(maximum, active)
+    return maximum
+
+
+def _plot_execution_growth(path: Path, output: Path, experiment_id: str) -> str:
+    requests = [record for record in iter_trace(path) if isinstance(record, RequestRecord)]
+    streams: dict[str, list[RequestRecord]] = defaultdict(list)
+    for request in requests:
+        streams[request.agent_id].append(request)
+    if not streams:
+        return "unavailable: source trace has no requests"
+    figure, axis = plt.subplots(figsize=(8, 5))
+    for agent_id, stream in sorted(streams.items()):
+        stream.sort(key=lambda request: request.sequence_number)
+        cumulative = _cumulative([request.input_tokens for request in stream])
+        axis.plot(range(1, len(stream) + 1), cumulative, "o-", label=agent_id)
+    axis.set_xlabel("Agent execution step (request count)")
+    axis.set_ylabel("Cumulative prompt tokens consumed")
+    axis.set_title(f"AgentTrace experiment: {experiment_id}")
+    axis.grid(alpha=0.25)
+    axis.legend()
+    figure.tight_layout()
+    figure.savefig(output, dpi=150)
+    plt.close(figure)
+    return str(output)
+
+
+def _plot_subagent_arrivals(path: Path, output: Path, experiment_id: str) -> str:
+    records = list(iter_trace(path))
+    agents = {record.agent_id: record for record in records if isinstance(record, AgentRecord)}
+    requests = [record for record in records if isinstance(record, RequestRecord)]
+    if not requests or not any(agent.parent_agent_id for agent in agents.values()):
+        return "unavailable: source trace has no parent-child agent activity"
+    origin = min(request.submitted_at for request in requests)
+    figure, axis = plt.subplots(figsize=(8, 5))
+    for relation, marker in (("parent", "o"), ("subagent", "^")):
+        selected = [
+            request
+            for request in requests
+            if (agents[request.agent_id].parent_agent_id is not None) == (relation == "subagent")
+        ]
+        axis.scatter(
+            [(request.submitted_at - origin).total_seconds() for request in selected],
+            [request.elapsed_seconds for request in selected],
+            label=relation,
+            marker=marker,
+        )
+    axis.set_xlabel("Request arrival offset (seconds)")
+    axis.set_ylabel("Client end-to-end latency (seconds)")
+    axis.set_title(f"Subagent arrival pattern: {experiment_id}")
+    axis.grid(alpha=0.25)
+    axis.legend()
+    figure.tight_layout()
+    figure.savefig(output, dpi=150)
+    plt.close(figure)
+    return str(output)
