@@ -70,7 +70,9 @@ class ReplayEngine:
         async def run_stream(requests: list[WorkloadRequest]) -> list[ReplayAttempt]:
             stream_attempts: list[ReplayAttempt] = []
             if requests:
-                initial_delay = requests[0].recorded_submission_offset_seconds * self.config.time_scale
+                initial_delay = (
+                    requests[0].recorded_submission_offset_seconds * self.config.time_scale
+                )
                 await asyncio.sleep(initial_delay)
             for index, request in enumerate(requests):
                 if index > 0:
@@ -144,7 +146,8 @@ class ReplayEngine:
                                     request.sampling_parameters.get("temperature", 0.0)
                                 ),
                                 top_p=float(request.sampling_parameters.get("top_p", 1.0)),
-                                max_tokens=self.config.output_tokens or request.expected_output_tokens,
+                                max_tokens=self.config.output_tokens
+                                or request.expected_output_tokens,
                                 seed=self.config.seed,
                                 stream=True,
                             )
@@ -161,7 +164,7 @@ class ReplayEngine:
                         agent_id=request.agent_id,
                         sequence_number=request.sequence_number,
                         attempt_number=number,
-                        mode=mode,  # type: ignore[arg-type]
+                        mode=mode,
                         scheduled_offset_seconds=scheduled_offset,
                         submitted_offset_seconds=submitted_offset,
                         client_scheduling_delay_seconds=max(0, submitted_offset - scheduled_offset),
@@ -188,7 +191,7 @@ class ReplayEngine:
                         agent_id=request.agent_id,
                         sequence_number=request.sequence_number,
                         attempt_number=number,
-                        mode=mode,  # type: ignore[arg-type]
+                        mode=mode,
                         scheduled_offset_seconds=scheduled_offset,
                         submitted_offset_seconds=submitted_offset,
                         client_scheduling_delay_seconds=max(0, submitted_offset - scheduled_offset),

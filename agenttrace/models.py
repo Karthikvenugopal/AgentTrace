@@ -84,4 +84,3 @@ class AgentOutcome(FrozenModel):
     output_tokens: int = Field(ge=0)
     started_at: datetime
     completed_at: datetime
-

@@ -3,10 +3,10 @@
 from __future__ import annotations
 
 import json
+from collections.abc import Iterable
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Iterable
 
 from pydantic import TypeAdapter, ValidationError
 
@@ -19,7 +19,7 @@ from agenttrace.tracing.schema import (
     TraceHeader,
 )
 
-RECORD_ADAPTER = TypeAdapter(AnyTraceRecord)
+RECORD_ADAPTER: TypeAdapter[AnyTraceRecord] = TypeAdapter(AnyTraceRecord)
 
 
 @dataclass

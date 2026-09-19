@@ -7,13 +7,14 @@ first record is a trace header; subsequent records are immutable observations.
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Annotated, Any, Literal, Union
+from itertools import pairwise
+from typing import Annotated, Any, Final, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from agenttrace.models import ExecutionStatus, RequestStatus, ToolStatus
 
-SCHEMA_VERSION = "1.0"
+SCHEMA_VERSION: Final[Literal["1.0"]] = "1.0"
 
 
 class TraceRecord(BaseModel):
@@ -131,7 +132,7 @@ class RequestRecord(TraceRecord):
     @field_validator("stream_chunk_arrivals_seconds")
     @classmethod
     def arrivals_are_monotonic(cls, values: list[float]) -> list[float]:
-        if any(right < left for left, right in zip(values, values[1:], strict=False)):
+        if any(right < left for left, right in pairwise(values)):
             raise ValueError("stream chunk arrivals must be monotonic")
         return values
 
@@ -174,6 +175,6 @@ class OutcomeRecord(TraceRecord):
 
 
 AnyTraceRecord = Annotated[
-    Union[TraceHeader, AgentRecord, RequestRecord, ToolCallRecord, OutcomeRecord],
+    TraceHeader | AgentRecord | RequestRecord | ToolCallRecord | OutcomeRecord,
     Field(discriminator="record_type"),
 ]

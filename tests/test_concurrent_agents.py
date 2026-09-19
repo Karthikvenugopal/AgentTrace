@@ -13,7 +13,8 @@ from agenttrace.tracing.storage import iter_trace
 
 
 class ScriptedClient:
-    calls: defaultdict[str, int] = defaultdict(int)
+    def __init__(self) -> None:
+        self.calls: defaultdict[str, int] = defaultdict(int)
 
     async def complete(self, request: InferenceRequest) -> InferenceResponse:
         agent_marker = request.messages[1].content
@@ -49,16 +50,17 @@ async def test_concurrent_parent_child_agents_have_independent_streams(tmp_path:
         "trace": {"output": trace, "content_mode": "metadata_only"},
     }
     parent = AgentConfig(**base, agent_id="parent")
-    child = AgentConfig(
-        **{**base, "task": "child"}, agent_id="child", parent_agent_id="parent"
-    )
+    child = AgentConfig(**{**base, "task": "child"}, agent_id="child", parent_agent_id="parent")
     outcomes = await run_agent_group([parent, child], lambda _: ScriptedClient())
     assert all(outcome.status == ExecutionStatus.SUCCEEDED for outcome in outcomes)
     records = list(iter_trace(trace))
     agents = [record for record in records if isinstance(record, AgentRecord)]
     requests = [record for record in records if isinstance(record, RequestRecord)]
     assert {agent.agent_id for agent in agents} == {"parent", "child"}
-    assert [request.sequence_number for request in requests if request.agent_id == "child"] == [0, 1]
+    assert [request.sequence_number for request in requests if request.agent_id == "child"] == [
+        0,
+        1,
+    ]
     assert max(request.concurrency_at_submission for request in requests) == 2
     assert (tmp_path / "parent.txt").read_text() == "done"
     assert (tmp_path / "child.txt").read_text() == "done"

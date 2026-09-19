@@ -1,0 +1,33 @@
+name: GPU integration
+
+on:
+  workflow_dispatch:
+    inputs:
+      endpoint:
+        description: OpenAI-compatible vLLM base URL reachable from the runner
+        required: true
+        default: http://127.0.0.1:8000/v1
+      model:
+        description: Served model identifier
+        required: true
+        default: qwen-coder-small
+
+permissions:
+  contents: read
+
+jobs:
+  vllm-gpu:
+    runs-on: [self-hosted, gpu]
+    timeout-minutes: 30
+    env:
+      AGENTTRACE_RUN_GPU_TESTS: "1"
+      AGENTTRACE_VLLM_URL: ${{ inputs.endpoint }}
+      AGENTTRACE_VLLM_MODEL: ${{ inputs.model }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install -e '.[dev,gpu]'
+      - run: pytest -m gpu -vv
+

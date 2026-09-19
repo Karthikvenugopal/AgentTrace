@@ -10,10 +10,10 @@ from agenttrace.agent.workspace import RepositoryWorkspace
 from agenttrace.instrumentation.timing import snapshot
 from agenttrace.instrumentation.tokens import TokenCounter
 from agenttrace.models import ToolStatus
+from agenttrace.telemetry.metrics import METRICS
+from agenttrace.telemetry.tracing import trace_span
 from agenttrace.tracing.schema import ToolCallRecord
 from agenttrace.tracing.storage import TraceWriter
-from agenttrace.telemetry.tracing import trace_span
-from agenttrace.telemetry.metrics import METRICS
 
 
 @dataclass(frozen=True)

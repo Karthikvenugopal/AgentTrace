@@ -4,10 +4,11 @@ from __future__ import annotations
 
 import asyncio
 import time
+from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from datetime import UTC, datetime
-from collections.abc import AsyncIterator
+from itertools import pairwise
 
 from agenttrace.serving.client import StreamObservation
 
@@ -36,8 +37,7 @@ def inter_chunk_intervals(chunks: list[StreamObservation]) -> list[float]:
     """
 
     return [
-        current.elapsed_seconds - previous.elapsed_seconds
-        for previous, current in zip(chunks, chunks[1:], strict=False)
+        current.elapsed_seconds - previous.elapsed_seconds for previous, current in pairwise(chunks)
     ]
 
 

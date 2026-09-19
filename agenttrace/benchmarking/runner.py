@@ -76,9 +76,7 @@ class BenchmarkRunner:
                 "prompt_tokens": case.context_tokens,
                 "concurrent_agents": case.concurrent_agents,
                 "active_subagents": (
-                    max(0, case.concurrent_agents - 1)
-                    if case.pattern == "parent_subagents"
-                    else 0
+                    max(0, case.concurrent_agents - 1) if case.pattern == "parent_subagents" else 0
                 ),
                 "seed": self.config.seed + repetition,
             }

@@ -4,13 +4,14 @@ from __future__ import annotations
 
 import json
 from collections import defaultdict
+from itertools import pairwise
 from pathlib import Path
 from typing import Any
 
 import matplotlib
 
 matplotlib.use("Agg")
-import matplotlib.pyplot as plt  # noqa: E402
+import matplotlib.pyplot as plt
 
 from agenttrace.benchmarking.aggregate import aggregate_experiment, distribution
 from agenttrace.tracing.schema import AgentRecord, RequestRecord, ToolCallRecord
@@ -161,7 +162,7 @@ def _chunk_intervals(requests: list[RequestRecord]) -> list[float]:
     intervals: list[float] = []
     for request in requests:
         arrivals = request.stream_chunk_arrivals_seconds
-        intervals.extend(right - left for left, right in zip(arrivals, arrivals[1:], strict=False))
+        intervals.extend(right - left for left, right in pairwise(arrivals))
     return intervals
 
 

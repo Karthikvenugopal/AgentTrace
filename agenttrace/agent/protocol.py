@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import json
-from typing import Annotated, Any, Literal, Union
+from typing import Annotated, Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, TypeAdapter
 
@@ -26,8 +26,8 @@ class FinishAction(ActionBase):
     summary: str = Field(min_length=1, max_length=10_000)
 
 
-AgentAction = Annotated[Union[ToolAction, FinishAction], Field(discriminator="action")]
-ACTION_ADAPTER = TypeAdapter(AgentAction)
+AgentAction = Annotated[ToolAction | FinishAction, Field(discriminator="action")]
+ACTION_ADAPTER: TypeAdapter[AgentAction] = TypeAdapter(AgentAction)
 
 
 def parse_action(content: str) -> AgentAction:

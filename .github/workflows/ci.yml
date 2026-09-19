@@ -1,0 +1,26 @@
+name: CI
+
+on:
+  push:
+    branches: [master, main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  cpu-tests:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - run: python -m pip install --upgrade pip
+      - run: pip install -e '.[dev]'
+      - run: ruff format --check .
+      - run: ruff check .
+      - run: mypy agenttrace
+      - run: pytest -m 'not gpu' --cov=agenttrace --cov-report=term-missing
+

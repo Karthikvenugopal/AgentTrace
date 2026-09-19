@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any, Literal, TypeVar
+from typing import Any, Literal, TypeVar, cast
 
 import yaml
 from pydantic import BaseModel, ConfigDict, Field, HttpUrl, SecretStr, model_validator
@@ -110,13 +110,20 @@ class BenchmarkAxis(StrictModel):
     context_tokens: list[int] = Field(default_factory=lambda: [128, 512, 2048])
     concurrent_agents: list[int] = Field(default_factory=lambda: [1, 2, 4, 8])
     patterns: list[Literal["sequential", "concurrent", "parent_subagents"]] = Field(
-        default_factory=lambda: ["sequential", "concurrent"]
+        default_factory=lambda: cast(
+            list[Literal["sequential", "concurrent", "parent_subagents"]],
+            ["sequential", "concurrent"],
+        )
     )
     workload_types: list[Literal["recorded", "synthetic", "parameterized"]] = Field(
-        default_factory=lambda: ["parameterized"]
+        default_factory=lambda: cast(
+            list[Literal["recorded", "synthetic", "parameterized"]], ["parameterized"]
+        )
     )
     replay_modes: list[Literal["open_loop", "closed_loop"]] = Field(
-        default_factory=lambda: ["open_loop", "closed_loop"]
+        default_factory=lambda: cast(
+            list[Literal["open_loop", "closed_loop"]], ["open_loop", "closed_loop"]
+        )
     )
 
 

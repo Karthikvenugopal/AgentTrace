@@ -68,9 +68,15 @@ strict = true
 warn_unreachable = true
 plugins = ["pydantic.mypy"]
 
+[[tool.mypy.overrides]]
+module = ["matplotlib.*", "numpy.*", "torch.*", "transformers.*", "opentelemetry.exporter.*"]
+ignore_missing_imports = true
+follow_imports = "skip"
+
 [tool.pytest.ini_options]
 addopts = "-ra --strict-config --strict-markers"
 asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
 testpaths = ["tests"]
 markers = [
   "gpu: requires CUDA and a running vLLM server",

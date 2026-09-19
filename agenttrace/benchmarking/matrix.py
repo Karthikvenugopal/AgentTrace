@@ -33,7 +33,10 @@ def expand_matrix(config: BenchmarkConfig) -> list[BenchmarkCase]:
         config.matrix.replay_modes,
     )
     for context, agents, pattern, workload_type, replay_mode in combinations:
-        identity = f"ctx={context}|agents={agents}|pattern={pattern}|workload={workload_type}|mode={replay_mode}"
+        identity = (
+            f"ctx={context}|agents={agents}|pattern={pattern}|"
+            f"workload={workload_type}|mode={replay_mode}"
+        )
         digest = hashlib.sha256(identity.encode()).hexdigest()[:10]
         cases.append(
             BenchmarkCase(

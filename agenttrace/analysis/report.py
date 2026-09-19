@@ -41,7 +41,8 @@ def generate_report(experiment_dir: Path) -> Path:
         "",
         "## Aggregate observations",
         "",
-        "| Case | Context tokens | Agents | Mode | Pattern | n | Median TTFT (s) | Median latency (s) | Output tok/s | Failed/timeouts |",
+        "| Case | Context tokens | Agents | Mode | Pattern | n | Median TTFT (s) | "
+        "Median latency (s) | Output tok/s | Failed/timeouts |",
         "|---|---:|---:|---|---|---:|---:|---:|---:|---:|",
     ]
     for case in cases:

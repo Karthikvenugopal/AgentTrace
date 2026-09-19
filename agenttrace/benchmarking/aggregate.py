@@ -49,7 +49,11 @@ def aggregate_experiment(experiment_dir: Path) -> dict[str, Any]:
         successes = [attempt for attempt in attempts if attempt["status"] == "succeeded"]
         # Only successful attempts enter latency/throughput distributions. Failures remain explicit.
         latencies = [float(attempt["latency_seconds"]) for attempt in successes]
-        ttfts = [float(attempt["ttft_seconds"]) for attempt in successes if attempt["ttft_seconds"] is not None]
+        ttfts = [
+            float(attempt["ttft_seconds"])
+            for attempt in successes
+            if attempt["ttft_seconds"] is not None
+        ]
         input_tokens = sum(int(attempt["input_tokens"] or 0) for attempt in successes)
         output_tokens = sum(int(attempt["output_tokens"] or 0) for attempt in successes)
         trial_durations = [

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Protocol
+from typing import Protocol, cast
 
 from agenttrace.models import ChatMessage, MessageRole
 from agenttrace.tracing.schema import PromptTokenBreakdown
@@ -72,7 +72,7 @@ class TransformersTokenCounter:
             actual = actual[:target_tokens]
             actual.extend([seed_ids[0]] * (target_tokens - len(actual)))
             text = self._tokenizer.decode(actual, clean_up_tokenization_spaces=False)
-        return text
+        return cast(str, text)
 
 
 @dataclass(frozen=True)

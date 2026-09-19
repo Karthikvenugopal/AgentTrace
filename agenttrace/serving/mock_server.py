@@ -37,7 +37,7 @@ def create_server(config: MockServerConfig) -> ThreadingHTTPServer:
     class Handler(BaseHTTPRequestHandler):
         protocol_version = "HTTP/1.1"
 
-        def do_GET(self) -> None:  # noqa: N802
+        def do_GET(self) -> None:
             if self.path == "/v1/models":
                 self._json(HTTPStatus.OK, {"object": "list", "data": [{"id": config.model}]})
             elif self.path == "/health":
@@ -57,7 +57,7 @@ def create_server(config: MockServerConfig) -> ThreadingHTTPServer:
             else:
                 self._json(HTTPStatus.NOT_FOUND, {"error": "not found"})
 
-        def do_POST(self) -> None:  # noqa: N802
+        def do_POST(self) -> None:
             if self.path != "/v1/chat/completions":
                 self._json(HTTPStatus.NOT_FOUND, {"error": "not found"})
                 return
@@ -121,7 +121,10 @@ def create_server(config: MockServerConfig) -> ThreadingHTTPServer:
                     "id": f"chatcmpl-mock-{uuid4().hex}",
                     "object": "chat.completion",
                     "choices": [
-                        {"message": {"role": "assistant", "content": content}, "finish_reason": "stop"}
+                        {
+                            "message": {"role": "assistant", "content": content},
+                            "finish_reason": "stop",
+                        }
                     ],
                     "usage": _usage(body, content),
                 },

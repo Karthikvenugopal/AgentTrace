@@ -12,10 +12,10 @@ from agenttrace.agent.protocol import FinishAction, ToolAction, parse_action, pr
 from agenttrace.agent.tools import ToolRegistry, default_tools
 from agenttrace.agent.workspace import RepositoryWorkspace
 from agenttrace.config import AgentConfig
+from agenttrace.instrumentation.requests import RequestSequenceTracker
 from agenttrace.instrumentation.timing import ActiveRequestCounter, snapshot
 from agenttrace.instrumentation.tokens import TokenCounter, WhitespaceTokenCounter, count_messages
 from agenttrace.instrumentation.tools import ToolTraceContext, execute_instrumented_tool
-from agenttrace.instrumentation.requests import RequestSequenceTracker
 from agenttrace.models import (
     AgentOutcome,
     ChatMessage,
@@ -25,10 +25,10 @@ from agenttrace.models import (
     new_id,
 )
 from agenttrace.serving.client import InferenceClient, InferenceError, InferenceRequest
+from agenttrace.telemetry.metrics import METRICS
+from agenttrace.telemetry.tracing import trace_span
 from agenttrace.tracing.schema import AgentRecord, OutcomeRecord, RequestRecord
 from agenttrace.tracing.storage import TraceWriter
-from agenttrace.telemetry.tracing import trace_span
-from agenttrace.telemetry.metrics import METRICS
 
 
 class CodingAgent:
@@ -85,7 +85,9 @@ class CodingAgent:
         messages = [
             ChatMessage(
                 role=MessageRole.SYSTEM,
-                content=self.config.system_prompt + "\n\n" + protocol_instruction(self.tools.specifications),
+                content=self.config.system_prompt
+                + "\n\n"
+                + protocol_instruction(self.tools.specifications),
             ),
             ChatMessage(role=MessageRole.USER, content=self.config.task),
         ]
@@ -98,7 +100,9 @@ class CodingAgent:
         iterations = 0
 
         for sequence in range(self.config.limits.max_iterations):
-            stop_reason = budget.stop_reason(now_monotonic=snapshot().monotonic, next_iteration=sequence)
+            stop_reason = budget.stop_reason(
+                now_monotonic=snapshot().monotonic, next_iteration=sequence
+            )
             if stop_reason is not None:
                 summary = stop_reason
                 break
@@ -109,19 +113,23 @@ class CodingAgent:
             async with self.active_requests.track() as concurrency:
                 submitted = snapshot()
                 try:
-                    with METRICS.track_request("agent", self.config.endpoint.model), trace_span(
-                        "agent.step",
-                        {
-                            "agenttrace.agent_id": self.config.agent_id,
-                            "agenttrace.sequence": sequence,
-                        },
-                    ), trace_span(
-                        "llm.request",
-                        {
-                            "agenttrace.request_id": request_id,
-                            "agenttrace.agent_id": self.config.agent_id,
-                            "llm.model": self.config.endpoint.model,
-                        },
+                    with (
+                        METRICS.track_request("agent", self.config.endpoint.model),
+                        trace_span(
+                            "agent.step",
+                            {
+                                "agenttrace.agent_id": self.config.agent_id,
+                                "agenttrace.sequence": sequence,
+                            },
+                        ),
+                        trace_span(
+                            "llm.request",
+                            {
+                                "agenttrace.request_id": request_id,
+                                "agenttrace.agent_id": self.config.agent_id,
+                                "llm.model": self.config.endpoint.model,
+                            },
+                        ),
                     ):
                         response = await self.client.complete(
                             InferenceRequest(
@@ -278,7 +286,9 @@ class CodingAgent:
             }
         return {
             "prompt": "\n".join(message.content for message in messages),
-            "messages": [message.model_dump(mode="json", exclude_none=True) for message in messages],
+            "messages": [
+                message.model_dump(mode="json", exclude_none=True) for message in messages
+            ],
         }
 
     def _request_base(  # type: ignore[no-untyped-def]

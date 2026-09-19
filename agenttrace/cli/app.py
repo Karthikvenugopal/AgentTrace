@@ -27,9 +27,9 @@ from agenttrace.instrumentation.tokens import WhitespaceTokenCounter
 from agenttrace.replay.engine import ReplayEngine
 from agenttrace.replay.loader import load_workload
 from agenttrace.replay.transform import transform_workload, write_transformation_manifest
-from agenttrace.serving.openai import OpenAICompatibleClient
 from agenttrace.serving.metrics import VLLMMetricsAdapter
 from agenttrace.serving.mock_server import MockServerConfig, serve_mock
+from agenttrace.serving.openai import OpenAICompatibleClient
 from agenttrace.tracing.summary import summarize_trace
 from agenttrace.tracing.synthetic import generate_synthetic_trace
 from agenttrace.tracing.validation import validate_file
@@ -83,7 +83,11 @@ def agent_run(config: Annotated[Path, typer.Option(exists=True, dir_okay=False)]
 @trace_app.command("validate")
 def trace_validate(input: Annotated[Path, typer.Option(exists=True, dir_okay=False)]) -> None:
     report = validate_file(input)
-    typer.echo(json.dumps({"valid": report.valid, "errors": report.errors, "warnings": report.warnings}, indent=2))
+    typer.echo(
+        json.dumps(
+            {"valid": report.valid, "errors": report.errors, "warnings": report.warnings}, indent=2
+        )
+    )
     if not report.valid:
         raise typer.Exit(1)
 

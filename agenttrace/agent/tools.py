@@ -7,7 +7,7 @@ import fnmatch
 import os
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Protocol
+from typing import Any, Protocol, cast
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
@@ -31,8 +31,9 @@ class AgentTool(Protocol):
     description: str
     arguments_model: type[ToolArguments]
 
-    async def execute(self, workspace: RepositoryWorkspace, arguments: ToolArguments) -> ToolExecution:
-        ...
+    async def execute(
+        self, workspace: RepositoryWorkspace, arguments: ToolArguments
+    ) -> ToolExecution: ...
 
     def specification(self) -> dict[str, Any]: ...
 
@@ -61,7 +62,9 @@ class ReadFileTool(ToolBase):
     description = "Read a bounded line range from a UTF-8 repository file."
     arguments_model = ReadFileArguments
 
-    async def execute(self, workspace: RepositoryWorkspace, arguments: ToolArguments) -> ToolExecution:
+    async def execute(
+        self, workspace: RepositoryWorkspace, arguments: ToolArguments
+    ) -> ToolExecution:
         args = ReadFileArguments.model_validate(arguments)
         path = workspace.resolve(args.path)
         if not path.is_file():
@@ -88,14 +91,15 @@ class ListDirectoryTool(ToolBase):
     description = "List repository-relative directory entries without traversing .git."
     arguments_model = ListDirectoryArguments
 
-    async def execute(self, workspace: RepositoryWorkspace, arguments: ToolArguments) -> ToolExecution:
+    async def execute(
+        self, workspace: RepositoryWorkspace, arguments: ToolArguments
+    ) -> ToolExecution:
         args = ListDirectoryArguments.model_validate(arguments)
         path = workspace.resolve(args.path)
         if not path.is_dir():
             return ToolExecution(ToolStatus.FAILED, f"not a directory: {args.path}")
         entries = sorted(
-            item.relative_to(workspace.root).as_posix()
-            + ("/" if item.is_dir() else "")
+            item.relative_to(workspace.root).as_posix() + ("/" if item.is_dir() else "")
             for item in path.iterdir()
             if item.name != ".git"
         )
@@ -118,13 +122,19 @@ class SearchTool(ToolBase):
     description = "Search UTF-8 repository files for a literal string."
     arguments_model = SearchArguments
 
-    async def execute(self, workspace: RepositoryWorkspace, arguments: ToolArguments) -> ToolExecution:
+    async def execute(
+        self, workspace: RepositoryWorkspace, arguments: ToolArguments
+    ) -> ToolExecution:
         args = SearchArguments.model_validate(arguments)
         root = workspace.resolve(args.path)
         matches: list[str] = []
         paths = [root] if root.is_file() else root.rglob("*")
         for path in paths:
-            if not path.is_file() or ".git" in path.parts or not fnmatch.fnmatch(path.name, args.glob):
+            if (
+                not path.is_file()
+                or ".git" in path.parts
+                or not fnmatch.fnmatch(path.name, args.glob)
+            ):
                 continue
             try:
                 for line_number, line in enumerate(
@@ -165,7 +175,7 @@ class ToolRegistry:
 
 
 def inspection_tools() -> list[AgentTool]:
-    return [ReadFileTool(), ListDirectoryTool(), SearchTool()]
+    return cast(list[AgentTool], [ReadFileTool(), ListDirectoryTool(), SearchTool()])
 
 
 class WriteFileArguments(ToolArguments):
@@ -178,7 +188,9 @@ class WriteFileTool(ToolBase):
     description = "Create or replace a UTF-8 file inside the repository workspace."
     arguments_model = WriteFileArguments
 
-    async def execute(self, workspace: RepositoryWorkspace, arguments: ToolArguments) -> ToolExecution:
+    async def execute(
+        self, workspace: RepositoryWorkspace, arguments: ToolArguments
+    ) -> ToolExecution:
         args = WriteFileArguments.model_validate(arguments)
         workspace.require_writable()
         path = workspace.resolve(args.path, must_exist=False)
@@ -199,7 +211,9 @@ class ReplaceTextTool(ToolBase):
     description = "Replace an exact text fragment with an expected occurrence count."
     arguments_model = ReplaceTextArguments
 
-    async def execute(self, workspace: RepositoryWorkspace, arguments: ToolArguments) -> ToolExecution:
+    async def execute(
+        self, workspace: RepositoryWorkspace, arguments: ToolArguments
+    ) -> ToolExecution:
         args = ReplaceTextArguments.model_validate(arguments)
         workspace.require_writable()
         path = workspace.resolve(args.path)
@@ -235,7 +249,9 @@ class RunCommandTool(ToolBase):
         self.timeout_seconds = timeout_seconds
         self.max_output_bytes = max_output_bytes
 
-    async def execute(self, workspace: RepositoryWorkspace, arguments: ToolArguments) -> ToolExecution:
+    async def execute(
+        self, workspace: RepositoryWorkspace, arguments: ToolArguments
+    ) -> ToolExecution:
         args = RunCommandArguments.model_validate(arguments)
         executable = Path(args.argv[0]).name
         if executable not in self.allowed_commands or args.argv[0] != executable:
@@ -271,13 +287,16 @@ class RunCommandTool(ToolBase):
 def default_tools(
     allowed_commands: list[str], *, timeout_seconds: float, max_output_bytes: int
 ) -> list[AgentTool]:
-    return [
-        *inspection_tools(),
-        WriteFileTool(),
-        ReplaceTextTool(),
-        RunCommandTool(
-            allowed_commands,
-            timeout_seconds=timeout_seconds,
-            max_output_bytes=max_output_bytes,
-        ),
-    ]
+    return cast(
+        list[AgentTool],
+        [
+            *inspection_tools(),
+            WriteFileTool(),
+            ReplaceTextTool(),
+            RunCommandTool(
+                allowed_commands,
+                timeout_seconds=timeout_seconds,
+                max_output_bytes=max_output_bytes,
+            ),
+        ],
+    )

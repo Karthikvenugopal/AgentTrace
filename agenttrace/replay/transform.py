@@ -64,7 +64,9 @@ def transform_workload(
             transformed.append(
                 source.model_copy(
                     update={
-                        "source_request_id": f"{source.source_request_id}:variant:{agent_index}:{sequence}",
+                        "source_request_id": (
+                            f"{source.source_request_id}:variant:{agent_index}:{sequence}"
+                        ),
                         "agent_id": agent_id,
                         "parent_agent_id": parent_agent_id,
                         "sequence_number": sequence,
