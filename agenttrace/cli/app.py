@@ -1,0 +1,165 @@
+"""AgentTrace command-line interface."""
+
+from __future__ import annotations
+
+import asyncio
+import json
+import os
+from pathlib import Path
+from typing import Annotated
+
+import typer
+
+from agenttrace.agent.orchestration import run_agent_group
+from agenttrace.analysis.pipeline import analyze_experiment
+from agenttrace.analysis.report import generate_report
+from agenttrace.benchmarking.aggregate import aggregate_experiment
+from agenttrace.benchmarking.runner import BenchmarkRunner
+from agenttrace.cli.doctor import run_doctor, serialize_checks
+from agenttrace.config import (
+    AgentConfig,
+    BenchmarkConfig,
+    ReplayConfig,
+    SyntheticConfig,
+    load_config,
+)
+from agenttrace.instrumentation.tokens import WhitespaceTokenCounter
+from agenttrace.replay.engine import ReplayEngine
+from agenttrace.replay.loader import load_workload
+from agenttrace.replay.transform import transform_workload, write_transformation_manifest
+from agenttrace.serving.openai import OpenAICompatibleClient
+from agenttrace.serving.metrics import VLLMMetricsAdapter
+from agenttrace.tracing.summary import summarize_trace
+from agenttrace.tracing.synthetic import generate_synthetic_trace
+from agenttrace.tracing.validation import validate_file
+
+app = typer.Typer(help="Profile coding-agent inference workloads.", no_args_is_help=True)
+agent_app = typer.Typer(help="Execute bounded coding agents.")
+trace_app = typer.Typer(help="Generate, validate, and inspect traces.")
+replay_app = typer.Typer(help="Replay inference workloads.")
+benchmark_app = typer.Typer(help="Run and report benchmark matrices.")
+app.add_typer(agent_app, name="agent")
+app.add_typer(trace_app, name="trace")
+app.add_typer(replay_app, name="replay")
+app.add_typer(benchmark_app, name="benchmark")
+
+
+@agent_app.command("run")
+def agent_run(config: Annotated[Path, typer.Option(exists=True, dir_okay=False)]) -> None:
+    settings = load_config(config, AgentConfig)
+
+    async def execute() -> None:
+        outcomes = await run_agent_group(
+            [settings], lambda endpoint: OpenAICompatibleClient(endpoint)
+        )
+        typer.echo(json.dumps([outcome.model_dump(mode="json") for outcome in outcomes], indent=2))
+
+    asyncio.run(execute())
+
+
+@trace_app.command("validate")
+def trace_validate(input: Annotated[Path, typer.Option(exists=True, dir_okay=False)]) -> None:
+    report = validate_file(input)
+    typer.echo(json.dumps({"valid": report.valid, "errors": report.errors, "warnings": report.warnings}, indent=2))
+    if not report.valid:
+        raise typer.Exit(1)
+
+
+@trace_app.command("summarize")
+def trace_summarize(input: Annotated[Path, typer.Option(exists=True, dir_okay=False)]) -> None:
+    typer.echo(json.dumps(summarize_trace(input).as_dict(), indent=2))
+
+
+@trace_app.command("generate")
+def trace_generate(config: Annotated[Path, typer.Option(exists=True, dir_okay=False)]) -> None:
+    settings = load_config(config, SyntheticConfig)
+    generate_synthetic_trace(settings)
+    typer.echo(f"wrote synthetic trace: {settings.output}")
+
+
+@replay_app.command("run")
+def replay_run(
+    trace: Annotated[Path, typer.Option(exists=True, dir_okay=False)],
+    config: Annotated[Path, typer.Option(exists=True, dir_okay=False)],
+    output: Annotated[Path, typer.Option()] = Path("results/replay.json"),
+) -> None:
+    settings = load_config(config, ReplayConfig)
+
+    async def execute() -> None:
+        workload = load_workload(trace)
+        if settings.mode == "parameterized":
+            workload = transform_workload(workload, settings, WhitespaceTokenCounter())
+            write_transformation_manifest(
+                output.with_suffix(".manifest.json"),
+                source_trace=trace,
+                source_trace_id=workload[0].source_trace_id if workload else "empty",
+                config=settings,
+                requests=workload,
+            )
+        client = OpenAICompatibleClient(settings.endpoint)
+        try:
+            engine = ReplayEngine(settings, client)
+            if settings.mode == "closed_loop":
+                result = await engine.run_closed_loop(workload)
+            else:
+                result = await engine.run_open_loop(workload)
+            if settings.mode == "parameterized":
+                result = result.model_copy(
+                    update={
+                        "mode": "parameterized",
+                        "attempts": [
+                            attempt.model_copy(update={"mode": "parameterized"})
+                            for attempt in result.attempts
+                        ],
+                    }
+                )
+        finally:
+            await client.close()
+        output.parent.mkdir(parents=True, exist_ok=True)
+        output.write_text(result.model_dump_json(indent=2) + "\n", encoding="utf-8")
+        typer.echo(f"wrote replay observations: {output}")
+
+    asyncio.run(execute())
+
+
+@benchmark_app.command("run")
+def benchmark_run(config: Annotated[Path, typer.Option(exists=True, dir_okay=False)]) -> None:
+    settings = load_config(config, BenchmarkConfig)
+    metrics_url = os.getenv("AGENTTRACE_VLLM_METRICS_URL")
+    metrics = VLLMMetricsAdapter(metrics_url) if metrics_url else None
+
+    async def execute() -> None:
+        runner = BenchmarkRunner(
+            settings,
+            lambda endpoint: OpenAICompatibleClient(endpoint),
+            server_metrics=metrics,
+        )
+        directory = await runner.run()
+        aggregate_experiment(directory)
+        analyze_experiment(directory, source_trace=settings.source_trace)
+        report = generate_report(directory)
+        typer.echo(f"wrote benchmark report: {report}")
+
+    asyncio.run(execute())
+
+
+@benchmark_app.command("report")
+def benchmark_report(results: Annotated[Path, typer.Option(exists=True, file_okay=False)]) -> None:
+    aggregate_experiment(results)
+    analyze_experiment(results)
+    typer.echo(str(generate_report(results)))
+
+
+@app.command("doctor")
+def doctor(
+    config: Annotated[Path | None, typer.Option(exists=True, dir_okay=False)] = None,
+) -> None:
+    endpoint = load_config(config, ReplayConfig).endpoint if config else None
+    checks = asyncio.run(run_doctor(endpoint))
+    typer.echo(json.dumps(serialize_checks(checks), indent=2))
+    if any(check.status == "failed" for check in checks):
+        raise typer.Exit(1)
+
+
+if __name__ == "__main__":
+    app()
