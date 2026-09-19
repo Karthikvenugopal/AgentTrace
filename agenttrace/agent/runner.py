@@ -14,17 +14,17 @@ from agenttrace.agent.workspace import RepositoryWorkspace
 from agenttrace.config import AgentConfig
 from agenttrace.instrumentation.timing import ActiveRequestCounter, snapshot
 from agenttrace.instrumentation.tokens import TokenCounter, WhitespaceTokenCounter, count_messages
+from agenttrace.instrumentation.tools import ToolTraceContext, execute_instrumented_tool
 from agenttrace.models import (
     AgentOutcome,
     ChatMessage,
     ExecutionStatus,
     MessageRole,
     RequestStatus,
-    ToolStatus,
     new_id,
 )
 from agenttrace.serving.client import InferenceClient, InferenceError, InferenceRequest
-from agenttrace.tracing.schema import AgentRecord, OutcomeRecord, RequestRecord, ToolCallRecord
+from agenttrace.tracing.schema import AgentRecord, OutcomeRecord, RequestRecord
 from agenttrace.tracing.storage import TraceWriter
 
 
@@ -168,29 +168,22 @@ class CodingAgent:
                 status = ExecutionStatus.SUCCEEDED
                 summary = action.summary
                 break
-            tool_started = snapshot()
-            execution = await self.tools.execute(action.tool, self.workspace, action.arguments)
-            tool_completed = snapshot()
-            tool_output = execution.output
-            self.writer.write(
-                ToolCallRecord(
+            execution = await execute_instrumented_tool(
+                registry=self.tools,
+                workspace=self.workspace,
+                name=action.tool,
+                arguments=action.arguments,
+                context=ToolTraceContext(
                     experiment_id=self.config.experiment_id,
                     trace_id=self.trace_id,
                     agent_id=self.config.agent_id,
                     request_id=request_id,
                     tool_call_id=action.tool_call_id,
-                    tool_name=action.tool,
-                    started_at=tool_started.wall_time,
-                    completed_at=tool_completed.wall_time,
-                    monotonic_started=tool_started.monotonic,
-                    monotonic_completed=tool_completed.monotonic,
-                    duration_seconds=tool_completed.monotonic - tool_started.monotonic,
-                    result_size_bytes=len(tool_output.encode()),
-                    output_tokens=self.counter.count(tool_output),
-                    status=execution.status,
-                    error=tool_output if execution.status != ToolStatus.SUCCEEDED else None,
-                )
+                ),
+                counter=self.counter,
+                writer=self.writer,
             )
+            tool_output = execution.output
             messages.append(
                 ChatMessage(
                     role=MessageRole.TOOL,
