@@ -30,6 +30,9 @@ from agenttrace.replay.transform import transform_workload, write_transformation
 from agenttrace.serving.metrics import VLLMMetricsAdapter
 from agenttrace.serving.mock_server import MockServerConfig, serve_mock
 from agenttrace.serving.openai import OpenAICompatibleClient
+from agenttrace.telemetry.logging import configure_logging
+from agenttrace.telemetry.metrics import serve_metrics
+from agenttrace.telemetry.tracing import configure_tracing
 from agenttrace.tracing.summary import summarize_trace
 from agenttrace.tracing.synthetic import generate_synthetic_trace
 from agenttrace.tracing.validation import validate_file
@@ -43,6 +46,23 @@ app.add_typer(agent_app, name="agent")
 app.add_typer(trace_app, name="trace")
 app.add_typer(replay_app, name="replay")
 app.add_typer(benchmark_app, name="benchmark")
+
+
+@app.callback()
+def initialize_telemetry() -> None:
+    """Enable optional exporters from environment variables without storing secrets."""
+
+    if os.getenv("AGENTTRACE_JSON_LOGS") == "1":
+        configure_logging()
+    otlp_endpoint = os.getenv("OTEL_EXPORTER_OTLP_ENDPOINT")
+    if otlp_endpoint:
+        endpoint = otlp_endpoint.rstrip("/")
+        if not endpoint.endswith("/v1/traces"):
+            endpoint += "/v1/traces"
+        configure_tracing(otlp_http_endpoint=endpoint)
+    metrics_port = os.getenv("AGENTTRACE_METRICS_PORT")
+    if metrics_port:
+        serve_metrics(int(metrics_port), os.getenv("AGENTTRACE_METRICS_HOST", "127.0.0.1"))
 
 
 @app.command("mock-server")
