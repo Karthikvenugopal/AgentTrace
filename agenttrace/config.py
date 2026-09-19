@@ -45,6 +45,7 @@ class WorkspaceConfig(StrictModel):
         default_factory=lambda: ["pytest", "python", "python3", "ruff", "mypy"]
     )
     writable: bool = True
+    isolated_copy: bool = True
 
 
 class TraceConfig(StrictModel):
