@@ -28,6 +28,7 @@ from agenttrace.serving.client import InferenceClient, InferenceError, Inference
 from agenttrace.tracing.schema import AgentRecord, OutcomeRecord, RequestRecord
 from agenttrace.tracing.storage import TraceWriter
 from agenttrace.telemetry.tracing import trace_span
+from agenttrace.telemetry.metrics import METRICS
 
 
 class CodingAgent:
@@ -108,7 +109,7 @@ class CodingAgent:
             async with self.active_requests.track() as concurrency:
                 submitted = snapshot()
                 try:
-                    with trace_span(
+                    with METRICS.track_request("agent", self.config.endpoint.model), trace_span(
                         "agent.step",
                         {
                             "agenttrace.agent_id": self.config.agent_id,
@@ -151,6 +152,15 @@ class CodingAgent:
                         exc,
                     )
                     summary = f"inference failed: {exc}"
+                    METRICS.observe_request(
+                        component="agent",
+                        model=self.config.endpoint.model,
+                        status="failed",
+                        latency_seconds=completed.monotonic - submitted.monotonic,
+                        ttft_seconds=None,
+                        input_tokens=accounting.total,
+                        output_tokens=0,
+                    )
                     status = ExecutionStatus.FAILED
                     break
             output_tokens = response.output_tokens
@@ -158,6 +168,15 @@ class CodingAgent:
                 output_tokens = self.counter.count(response.content)
             total_input += response.input_tokens or accounting.total
             total_output += output_tokens
+            METRICS.observe_request(
+                component="agent",
+                model=self.config.endpoint.model,
+                status="succeeded",
+                latency_seconds=completed.monotonic - submitted.monotonic,
+                ttft_seconds=response.ttft_seconds,
+                input_tokens=response.input_tokens or accounting.total,
+                output_tokens=output_tokens,
+            )
             budget.add_usage(response.input_tokens or accounting.total, output_tokens)
             try:
                 action = parse_action(response.content)

@@ -13,6 +13,7 @@ from agenttrace.models import ToolStatus
 from agenttrace.tracing.schema import ToolCallRecord
 from agenttrace.tracing.storage import TraceWriter
 from agenttrace.telemetry.tracing import trace_span
+from agenttrace.telemetry.metrics import METRICS
 
 
 @dataclass(frozen=True)
@@ -50,6 +51,11 @@ async def execute_instrumented_tool(
         execution = ToolExecution(ToolStatus.FAILED, f"{type(exc).__name__}: {exc}")
     completed = snapshot()
     output = execution.output
+    METRICS.observe_tool(
+        tool=name,
+        status=execution.status.value,
+        duration_seconds=completed.monotonic - started.monotonic,
+    )
     writer.write(
         ToolCallRecord(
             experiment_id=context.experiment_id,
