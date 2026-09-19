@@ -1,0 +1,38 @@
+experiment_id: vllm-single-gpu
+source_trace: examples/traces/mock-agent.jsonl
+measurement_label: real_inference
+output_dir: results
+replay:
+  mode: parameterized
+  endpoint:
+    base_url: http://127.0.0.1:8000/v1
+    model: qwen-coder-small
+    timeout_seconds: 120
+    max_retries: 0
+    stream: true
+  time_scale: 1
+  max_concurrency: 8
+  request_timeout_seconds: 120
+  retry_count: 1
+  seed: 7
+  output_tokens: 64
+  execution_length: 4
+matrix:
+  context_tokens: [256, 1024, 3072]
+  concurrent_agents: [1, 2, 4, 8]
+  patterns: [concurrent, parent_subagents]
+  workload_types: [parameterized]
+  replay_modes: [open_loop, closed_loop]
+warmup_requests: 2
+repetitions: 3
+randomize_order: true
+rotate_order_each_repetition: true
+seed: 7
+server_metadata:
+  backend: vllm
+  expected_vllm_image: vllm/vllm-openai:v0.6.3
+  model: Qwen/Qwen2.5-Coder-0.5B-Instruct
+  max_model_len: 4096
+  max_num_seqs: 8
+  gpu_memory_utilization: 0.85
+  prefix_caching: false

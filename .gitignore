@@ -209,6 +209,11 @@ tempCodeRunnerFile.py
 # PyPI configuration file
 .pypirc
 
+# AgentTrace runtime artifacts (curated examples live under examples/)
+/traces/
+/results/
+/workspaces/
+
 # Marimo
 marimo/_static/
 marimo/_lsp/

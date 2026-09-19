@@ -1,0 +1,31 @@
+experiment_id: mock-agent-demo
+agent_id: agent-1
+task: Fix the add function in calc.py and run the tests.
+endpoint:
+  base_url: http://127.0.0.1:8010/v1
+  model: agenttrace-mock
+  timeout_seconds: 30
+  max_retries: 0
+  stream: true
+sampling:
+  temperature: 0
+  top_p: 1
+  max_tokens: 256
+  seed: 7
+limits:
+  max_iterations: 8
+  max_wall_time_seconds: 120
+  max_total_tokens: 20000
+  command_timeout_seconds: 30
+  max_tool_output_bytes: 65536
+workspace:
+  root: examples/fixtures/tiny_math
+  allowed_commands: [pytest]
+  writable: true
+  isolated_copy: true
+trace:
+  output: examples/traces/mock-agent.jsonl
+  content_mode: full
+  redact_patterns: []
+  flush_each_record: true
+

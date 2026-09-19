@@ -1,0 +1,10 @@
+experiment_id: synthetic-controlled-demo
+seed: 7
+agents: 2
+requests_per_agent: 4
+initial_prompt_tokens: 128
+prompt_growth_tokens: 64
+output_tokens: 32
+inter_request_seconds: 0.1
+output: traces/synthetic.jsonl
+
