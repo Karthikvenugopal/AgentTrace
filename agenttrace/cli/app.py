@@ -29,6 +29,7 @@ from agenttrace.replay.loader import load_workload
 from agenttrace.replay.transform import transform_workload, write_transformation_manifest
 from agenttrace.serving.openai import OpenAICompatibleClient
 from agenttrace.serving.metrics import VLLMMetricsAdapter
+from agenttrace.serving.mock_server import MockServerConfig, serve_mock
 from agenttrace.tracing.summary import summarize_trace
 from agenttrace.tracing.synthetic import generate_synthetic_trace
 from agenttrace.tracing.validation import validate_file
@@ -42,6 +43,28 @@ app.add_typer(agent_app, name="agent")
 app.add_typer(trace_app, name="trace")
 app.add_typer(replay_app, name="replay")
 app.add_typer(benchmark_app, name="benchmark")
+
+
+@app.command("mock-server")
+def mock_server(
+    host: Annotated[str, typer.Option()] = "127.0.0.1",
+    port: Annotated[int, typer.Option()] = 8010,
+    first_token_delay: Annotated[float, typer.Option(min=0)] = 0.01,
+    inter_chunk_delay: Annotated[float, typer.Option(min=0)] = 0.005,
+    fail_every: Annotated[int, typer.Option(min=0)] = 0,
+) -> None:
+    """Run the CPU-only test server; its timings are simulated, not model performance."""
+
+    typer.echo(f"AgentTrace mock server listening on http://{host}:{port}/v1")
+    serve_mock(
+        MockServerConfig(
+            host=host,
+            port=port,
+            first_token_delay_seconds=first_token_delay,
+            inter_chunk_delay_seconds=inter_chunk_delay,
+            fail_every=fail_every,
+        )
+    )
 
 
 @agent_app.command("run")
