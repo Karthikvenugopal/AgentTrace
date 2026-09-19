@@ -71,6 +71,7 @@ def analyze_experiment(experiment_dir: Path, *, source_trace: Path | None = None
         else aggregate_experiment(experiment_dir)
     )
     trace_analysis = analyze_trace(source_trace) if source_trace else None
+    observations = _read_observations(experiment_dir / "observations.jsonl")
     charts_dir = experiment_dir / "charts"
     charts_dir.mkdir(exist_ok=True)
     chart_results = {
@@ -98,6 +99,15 @@ def analyze_experiment(experiment_dir: Path, *, source_trace: Path | None = None
             y_label="Aggregate output-token throughput (tokens/second)",
             output=charts_dir / "concurrency-vs-output-throughput.png",
         ),
+        "tool_wait_vs_server_utilization": _plot_tool_wait_utilization(
+            observations,
+            charts_dir / "tool-wait-vs-server-utilization.png",
+            aggregates["experiment_id"],
+        ),
+        "subagent_activity_vs_latency": _plot_subagent_case_latency(
+            aggregates,
+            charts_dir / "subagent-activity-vs-latency.png",
+        ),
     }
     if source_trace:
         chart_results["execution_length_vs_cumulative_prompt_tokens"] = _plot_execution_growth(
@@ -111,15 +121,16 @@ def analyze_experiment(experiment_dir: Path, *, source_trace: Path | None = None
             aggregates["experiment_id"],
         )
     unavailable = {
-        "tool_wait_vs_server_utilization": (
-            "requires aligned time-series vLLM utilization samples; before/after counters are "
-            "not sufficient for a utilization curve"
-        ),
         "request_level_server_queueing": (
             "vLLM Prometheus queue histograms are aggregate and cannot be assigned exactly to "
             "individual requests without backend-supported correlation"
-        ),
+        )
     }
+    if chart_results["tool_wait_vs_server_utilization"].startswith("unavailable"):
+        unavailable["tool_wait_vs_server_utilization"] = (
+            "requires aligned time-series vLLM utilization samples; before/after counters are "
+            "not sufficient for a utilization curve"
+        )
     result = {
         "experiment_id": aggregates["experiment_id"],
         "measured_aggregate_results": aggregates,
@@ -170,6 +181,71 @@ def _plot_case_metric(
     figure.savefig(output, dpi=150)
     plt.close(figure)
     return str(output)
+
+
+def _plot_tool_wait_utilization(
+    observations: list[dict[str, Any]], output: Path, experiment_id: str
+) -> str:
+    points: list[tuple[float, float]] = []
+    for observation in observations:
+        wait = (observation.get("effective_replay") or {}).get("tool_wait_seconds")
+        if wait is None:
+            continue
+        values: list[float] = []
+        for sample in observation.get("server_metrics_samples", []):
+            metric = (sample or {}).get("available", {}).get("gpu_kv_cache_usage", {})
+            values.extend(float(value) for value in metric.values())
+        if values:
+            points.append((float(wait), sum(values) / len(values)))
+    if len({point[0] for point in points}) < 2:
+        return "unavailable: requires two tool-wait settings and sampled GPU KV-cache usage"
+    figure, axis = plt.subplots(figsize=(8, 5))
+    axis.scatter([point[0] for point in points], [point[1] for point in points])
+    axis.set_xlabel("Configured tool-wait duration (seconds)")
+    axis.set_ylabel("Mean sampled server GPU KV-cache utilization (fraction)")
+    axis.set_title(f"Tool waits and server utilization: {experiment_id}")
+    axis.grid(alpha=0.25)
+    figure.tight_layout()
+    figure.savefig(output, dpi=150)
+    plt.close(figure)
+    return str(output)
+
+
+def _plot_subagent_case_latency(aggregates: dict[str, Any], output: Path) -> str:
+    points = [
+        (
+            int(case["configuration"]["concurrent_agents"]),
+            float(case["latency_seconds"]["median"]),
+            case["configuration"]["replay_mode"],
+        )
+        for case in aggregates["cases"]
+        if case["configuration"]["pattern"] == "parent_subagents"
+        and case["latency_seconds"]["median"] is not None
+    ]
+    if not points:
+        return "unavailable: benchmark has no parent-subagent cases"
+    figure, axis = plt.subplots(figsize=(8, 5))
+    for mode in sorted({point[2] for point in points}):
+        selected = sorted(point for point in points if point[2] == mode)
+        axis.plot(
+            [point[0] for point in selected],
+            [point[1] for point in selected],
+            "o-",
+            label=mode,
+        )
+    axis.set_xlabel("Active parent and subagent count")
+    axis.set_ylabel("Median client end-to-end latency (seconds)")
+    axis.set_title(f"Concurrent subagents: {aggregates['experiment_id']}")
+    axis.grid(alpha=0.25)
+    axis.legend()
+    figure.tight_layout()
+    figure.savefig(output, dpi=150)
+    plt.close(figure)
+    return str(output)
+
+
+def _read_observations(path: Path) -> list[dict[str, Any]]:
+    return [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line]
 
 
 def _chunk_intervals(requests: list[RequestRecord]) -> list[float]:

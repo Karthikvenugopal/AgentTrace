@@ -158,6 +158,7 @@ class BenchmarkConfig(StrictModel):
     repetitions: int = Field(default=3, gt=0)
     randomize_order: bool = True
     rotate_order_each_repetition: bool = True
+    server_metrics_interval_seconds: float = Field(default=0.25, gt=0)
     seed: int = 7
     server_metadata: dict[str, Any] = Field(default_factory=dict)
 

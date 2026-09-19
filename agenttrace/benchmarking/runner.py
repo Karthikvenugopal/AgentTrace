@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import json
 from collections.abc import Callable
 from datetime import UTC, datetime
@@ -10,7 +11,7 @@ from typing import Any
 
 from agenttrace.benchmarking.matrix import BenchmarkCase, ordered_cases
 from agenttrace.benchmarking.provenance import capture_provenance
-from agenttrace.config import BenchmarkConfig, EndpointConfig
+from agenttrace.config import BenchmarkConfig, EndpointConfig, ReplayConfig
 from agenttrace.instrumentation.tokens import TokenCounter, WhitespaceTokenCounter
 from agenttrace.replay.engine import ReplayEngine
 from agenttrace.replay.loader import load_workload
@@ -52,8 +53,20 @@ class BenchmarkRunner:
         ):
             for repetition in range(self.config.repetitions):
                 for case in ordered_cases(self.config, repetition):
-                    result, before, after = await self._run_case(case, repetition, source)
-                    self._append_observation(observations, case, repetition, result, before, after)
+                    result, before, after, samples, metric_errors, replay = await self._run_case(
+                        case, repetition, source
+                    )
+                    self._append_observation(
+                        observations,
+                        case,
+                        repetition,
+                        result,
+                        before,
+                        after,
+                        samples,
+                        metric_errors,
+                        replay,
+                    )
         completion = {
             "completed_at": datetime.now(UTC).isoformat(),
             "started_at": started_at.isoformat(),
@@ -69,7 +82,14 @@ class BenchmarkRunner:
         case: BenchmarkCase,
         repetition: int,
         source: list[WorkloadRequest],
-    ) -> tuple[ReplaySessionResult, ServerMetricsSnapshot | None, ServerMetricsSnapshot | None]:
+    ) -> tuple[
+        ReplaySessionResult,
+        ServerMetricsSnapshot | None,
+        ServerMetricsSnapshot | None,
+        list[ServerMetricsSnapshot],
+        list[str],
+        ReplayConfig,
+    ]:
         replay = self.config.replay.model_copy(
             update={
                 "mode": case.replay_mode,
@@ -86,20 +106,54 @@ class BenchmarkRunner:
             workload = transform_workload(source, replay, self.counter)
         client = self.client_factory(replay.endpoint)
         engine = ReplayEngine(replay, client)
+        samples: list[ServerMetricsSnapshot] = []
+        metric_errors: list[str] = []
+        stop_sampling = asyncio.Event()
+
+        async def sample_metrics() -> None:
+            if self.server_metrics is None:
+                return
+            while not stop_sampling.is_set():
+                try:
+                    samples.append(await self.server_metrics.collect())
+                except Exception as exc:
+                    metric_errors.append(f"{type(exc).__name__}: {exc}")
+                try:
+                    await asyncio.wait_for(
+                        stop_sampling.wait(),
+                        timeout=self.config.server_metrics_interval_seconds,
+                    )
+                except TimeoutError:
+                    pass
+
         try:
             if self.config.warmup_requests:
                 warmup = workload[: self.config.warmup_requests]
                 if warmup:
                     await engine.run_closed_loop(warmup)
-            before = await self.server_metrics.collect() if self.server_metrics else None
-            if case.replay_mode == "open_loop":
-                result = await engine.run_open_loop(workload)
-            else:
-                result = await engine.run_closed_loop(workload)
-            after = await self.server_metrics.collect() if self.server_metrics else None
-            return result, before, after
+            before = await self._safe_server_snapshot(metric_errors)
+            sampling_task = asyncio.create_task(sample_metrics())
+            try:
+                if case.replay_mode == "open_loop":
+                    result = await engine.run_open_loop(workload)
+                else:
+                    result = await engine.run_closed_loop(workload)
+            finally:
+                stop_sampling.set()
+                await sampling_task
+            after = await self._safe_server_snapshot(metric_errors)
+            return result, before, after, samples, metric_errors, replay
         finally:
             await client.close()
+
+    async def _safe_server_snapshot(self, errors: list[str]) -> ServerMetricsSnapshot | None:
+        if self.server_metrics is None:
+            return None
+        try:
+            return await self.server_metrics.collect()
+        except Exception as exc:
+            errors.append(f"{type(exc).__name__}: {exc}")
+            return None
 
     def _write_metadata(self, started_at: datetime) -> None:
         config = self.config.model_dump(mode="json", exclude={"replay": {"endpoint": {"api_key"}}})
@@ -136,6 +190,9 @@ class BenchmarkRunner:
         result: ReplaySessionResult,
         before: ServerMetricsSnapshot | None,
         after: ServerMetricsSnapshot | None,
+        samples: list[ServerMetricsSnapshot],
+        metric_errors: list[str],
+        replay_config: ReplayConfig,
     ) -> None:
         record = {
             "record_type": "benchmark_trial",
@@ -145,6 +202,11 @@ class BenchmarkRunner:
             "replay": result.model_dump(mode="json"),
             "server_metrics_before": self._snapshot(before),
             "server_metrics_after": self._snapshot(after),
+            "server_metrics_samples": [self._snapshot(sample) for sample in samples],
+            "server_metrics_errors": metric_errors,
+            "effective_replay": replay_config.model_dump(
+                mode="json", exclude={"endpoint": {"api_key"}}
+            ),
         }
         with path.open("a", encoding="utf-8") as handle:
             handle.write(json.dumps(record, sort_keys=True) + "\n")

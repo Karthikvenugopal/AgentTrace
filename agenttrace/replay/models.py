@@ -36,6 +36,7 @@ class ReplayAttempt(ReplayModel):
     source_request_id: str
     replay_request_id: str
     agent_id: str
+    parent_agent_id: str | None = None
     sequence_number: int
     attempt_number: int = Field(ge=1)
     mode: Literal["open_loop", "closed_loop", "parameterized"]
