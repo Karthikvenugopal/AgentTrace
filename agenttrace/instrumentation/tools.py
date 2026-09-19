@@ -12,6 +12,7 @@ from agenttrace.instrumentation.tokens import TokenCounter
 from agenttrace.models import ToolStatus
 from agenttrace.tracing.schema import ToolCallRecord
 from agenttrace.tracing.storage import TraceWriter
+from agenttrace.telemetry.tracing import trace_span
 
 
 @dataclass(frozen=True)
@@ -35,7 +36,16 @@ async def execute_instrumented_tool(
 ) -> ToolExecution:
     started = snapshot()
     try:
-        execution = await registry.execute(name, workspace, arguments)
+        with trace_span(
+            "tool.call",
+            {
+                "agenttrace.experiment_id": context.experiment_id,
+                "agenttrace.agent_id": context.agent_id,
+                "agenttrace.request_id": context.request_id,
+                "agenttrace.tool_name": name,
+            },
+        ):
+            execution = await registry.execute(name, workspace, arguments)
     except Exception as exc:  # defensive boundary: failures must remain trace-visible
         execution = ToolExecution(ToolStatus.FAILED, f"{type(exc).__name__}: {exc}")
     completed = snapshot()

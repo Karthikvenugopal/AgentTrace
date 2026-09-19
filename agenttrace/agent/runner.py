@@ -27,6 +27,7 @@ from agenttrace.models import (
 from agenttrace.serving.client import InferenceClient, InferenceError, InferenceRequest
 from agenttrace.tracing.schema import AgentRecord, OutcomeRecord, RequestRecord
 from agenttrace.tracing.storage import TraceWriter
+from agenttrace.telemetry.tracing import trace_span
 
 
 class CodingAgent:
@@ -57,6 +58,18 @@ class CodingAgent:
         )
 
     async def run(self) -> AgentOutcome:
+        with trace_span(
+            "agent.execution",
+            {
+                "agenttrace.experiment_id": self.config.experiment_id,
+                "agenttrace.trace_id": self.trace_id,
+                "agenttrace.agent_id": self.config.agent_id,
+                "agenttrace.parent_agent_id": self.config.parent_agent_id,
+            },
+        ):
+            return await self._run()
+
+    async def _run(self) -> AgentOutcome:
         started = snapshot()
         self.writer.write(
             AgentRecord(
@@ -95,18 +108,32 @@ class CodingAgent:
             async with self.active_requests.track() as concurrency:
                 submitted = snapshot()
                 try:
-                    response = await self.client.complete(
-                        InferenceRequest(
-                            request_id=request_id,
-                            model=self.config.endpoint.model,
-                            messages=list(messages),
-                            temperature=self.config.sampling.temperature,
-                            top_p=self.config.sampling.top_p,
-                            max_tokens=self.config.sampling.max_tokens,
-                            seed=self.config.sampling.seed,
-                            stream=self.config.endpoint.stream,
+                    with trace_span(
+                        "agent.step",
+                        {
+                            "agenttrace.agent_id": self.config.agent_id,
+                            "agenttrace.sequence": sequence,
+                        },
+                    ), trace_span(
+                        "llm.request",
+                        {
+                            "agenttrace.request_id": request_id,
+                            "agenttrace.agent_id": self.config.agent_id,
+                            "llm.model": self.config.endpoint.model,
+                        },
+                    ):
+                        response = await self.client.complete(
+                            InferenceRequest(
+                                request_id=request_id,
+                                model=self.config.endpoint.model,
+                                messages=list(messages),
+                                temperature=self.config.sampling.temperature,
+                                top_p=self.config.sampling.top_p,
+                                max_tokens=self.config.sampling.max_tokens,
+                                seed=self.config.sampling.seed,
+                                stream=self.config.endpoint.stream,
+                            )
                         )
-                    )
                     completed = snapshot()
                 except InferenceError as exc:
                     completed = snapshot()

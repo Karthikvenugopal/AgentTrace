@@ -10,6 +10,7 @@ from agenttrace.config import ReplayConfig
 from agenttrace.models import new_id
 from agenttrace.replay.models import ReplayAttempt, ReplaySessionResult, WorkloadRequest
 from agenttrace.serving.client import InferenceClient, InferenceError, InferenceRequest
+from agenttrace.telemetry.tracing import trace_span
 
 
 class ReplayEngine:
@@ -35,7 +36,14 @@ class ReplayEngine:
                     session_started=monotonic_started,
                 )
 
-        nested = await asyncio.gather(*(scheduled(request) for request in workload))
+        with trace_span(
+            "replay.session",
+            {
+                "agenttrace.replay_session_id": session_id,
+                "agenttrace.replay_mode": "open_loop",
+            },
+        ):
+            nested = await asyncio.gather(*(scheduled(request) for request in workload))
         attempts = [attempt for group in nested for attempt in group]
         return ReplaySessionResult(
             replay_session_id=session_id,
@@ -82,7 +90,14 @@ class ReplayEngine:
                     )
             return stream_attempts
 
-        nested = await asyncio.gather(*(run_stream(requests) for requests in streams.values()))
+        with trace_span(
+            "replay.session",
+            {
+                "agenttrace.replay_session_id": session_id,
+                "agenttrace.replay_mode": "closed_loop",
+            },
+        ):
+            nested = await asyncio.gather(*(run_stream(requests) for requests in streams.values()))
         attempts = [attempt for stream in nested for attempt in stream]
         attempts.sort(key=lambda attempt: attempt.submitted_at)
         return ReplaySessionResult(
@@ -110,21 +125,32 @@ class ReplayEngine:
             submitted_at = datetime.now(UTC)
             started = time.monotonic()
             try:
-                response = await asyncio.wait_for(
-                    self.client.complete(
-                        InferenceRequest(
-                            request_id=replay_request_id,
-                            model=self.config.endpoint.model or request.model,
-                            messages=request.messages,
-                            temperature=float(request.sampling_parameters.get("temperature", 0.0)),
-                            top_p=float(request.sampling_parameters.get("top_p", 1.0)),
-                            max_tokens=self.config.output_tokens or request.expected_output_tokens,
-                            seed=self.config.seed,
-                            stream=True,
-                        )
-                    ),
-                    timeout=self.config.request_timeout_seconds,
-                )
+                with trace_span(
+                    "replay.request",
+                    {
+                        "agenttrace.replay_session_id": session_id,
+                        "agenttrace.request_id": replay_request_id,
+                        "agenttrace.agent_id": request.agent_id,
+                        "agenttrace.replay_mode": mode,
+                    },
+                ):
+                    response = await asyncio.wait_for(
+                        self.client.complete(
+                            InferenceRequest(
+                                request_id=replay_request_id,
+                                model=self.config.endpoint.model or request.model,
+                                messages=request.messages,
+                                temperature=float(
+                                    request.sampling_parameters.get("temperature", 0.0)
+                                ),
+                                top_p=float(request.sampling_parameters.get("top_p", 1.0)),
+                                max_tokens=self.config.output_tokens or request.expected_output_tokens,
+                                seed=self.config.seed,
+                                stream=True,
+                            )
+                        ),
+                        timeout=self.config.request_timeout_seconds,
+                    )
                 completed_at = datetime.now(UTC)
                 attempts.append(
                     ReplayAttempt(
