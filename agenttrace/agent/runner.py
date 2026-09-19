@@ -57,6 +57,8 @@ class CodingAgent:
                 config.workspace.allowed_commands,
                 timeout_seconds=config.limits.command_timeout_seconds,
                 max_output_bytes=config.limits.max_tool_output_bytes,
+                cpu_seconds=config.limits.command_cpu_seconds,
+                memory_mb=config.limits.command_memory_mb,
             )
         )
 

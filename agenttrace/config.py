@@ -44,6 +44,8 @@ class AgentLimits(StrictModel):
     max_wall_time_seconds: float = Field(default=600.0, gt=0)
     max_total_tokens: int = Field(default=100_000, gt=0)
     command_timeout_seconds: float = Field(default=60.0, gt=0)
+    command_cpu_seconds: int = Field(default=60, gt=0)
+    command_memory_mb: int = Field(default=2048, gt=0)
     max_tool_output_bytes: int = Field(default=65_536, gt=0)
 
 

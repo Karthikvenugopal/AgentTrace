@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import fnmatch
 import os
+import resource
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Protocol, cast
@@ -244,10 +245,14 @@ class RunCommandTool(ToolBase):
         *,
         timeout_seconds: float,
         max_output_bytes: int,
+        cpu_seconds: int,
+        memory_mb: int,
     ) -> None:
         self.allowed_commands = frozenset(allowed_commands)
         self.timeout_seconds = timeout_seconds
         self.max_output_bytes = max_output_bytes
+        self.cpu_seconds = cpu_seconds
+        self.memory_bytes = memory_mb * 1024 * 1024
 
     async def execute(
         self, workspace: RepositoryWorkspace, arguments: ToolArguments
@@ -271,21 +276,63 @@ class RunCommandTool(ToolBase):
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.STDOUT,
             start_new_session=True,
+            preexec_fn=self._set_resource_limits if os.name == "posix" else None,
         )
+        assert process.stdout is not None
+        collector = asyncio.create_task(self._collect_output(process.stdout))
         try:
-            stdout, _ = await asyncio.wait_for(process.communicate(), timeout=self.timeout_seconds)
+            await asyncio.wait_for(process.wait(), timeout=self.timeout_seconds)
         except TimeoutError:
             process.kill()
             await process.wait()
-            return ToolExecution(ToolStatus.TIMEOUT, f"timed out after {self.timeout_seconds}s")
-        truncated = len(stdout) > self.max_output_bytes
-        output = stdout[: self.max_output_bytes].decode("utf-8", errors="replace")
+            output, truncated = await collector
+            decoded = output.decode("utf-8", errors="replace")
+            return ToolExecution(
+                ToolStatus.TIMEOUT,
+                f"timed out after {self.timeout_seconds}s\n{decoded}",
+                truncated,
+            )
+        output, truncated = await collector
+        decoded = output.decode("utf-8", errors="replace")
         status = ToolStatus.SUCCEEDED if process.returncode == 0 else ToolStatus.FAILED
-        return ToolExecution(status, f"exit_code={process.returncode}\n{output}", truncated)
+        return ToolExecution(status, f"exit_code={process.returncode}\n{decoded}", truncated)
+
+    async def _collect_output(self, stream: asyncio.StreamReader) -> tuple[bytes, bool]:
+        chunks: list[bytes] = []
+        retained = 0
+        truncated = False
+        while chunk := await stream.read(8192):
+            remaining = self.max_output_bytes - retained
+            if remaining > 0:
+                kept = chunk[:remaining]
+                chunks.append(kept)
+                retained += len(kept)
+            if len(chunk) > remaining:
+                truncated = True
+        return b"".join(chunks), truncated
+
+    def _set_resource_limits(self) -> None:
+        # Some platforms expose a limit constant but reject setting it. Wall time and
+        # bounded output still apply there; supported POSIX kernels enforce both limits.
+        for kind, requested in (
+            (resource.RLIMIT_CPU, self.cpu_seconds),
+            (resource.RLIMIT_AS, self.memory_bytes),
+        ):
+            try:
+                _, hard = resource.getrlimit(kind)
+                soft = requested if hard == resource.RLIM_INFINITY else min(requested, hard)
+                resource.setrlimit(kind, (soft, hard))
+            except (OSError, ValueError):
+                continue
 
 
 def default_tools(
-    allowed_commands: list[str], *, timeout_seconds: float, max_output_bytes: int
+    allowed_commands: list[str],
+    *,
+    timeout_seconds: float,
+    max_output_bytes: int,
+    cpu_seconds: int,
+    memory_mb: int,
 ) -> list[AgentTool]:
     return cast(
         list[AgentTool],
@@ -297,6 +344,8 @@ def default_tools(
                 allowed_commands,
                 timeout_seconds=timeout_seconds,
                 max_output_bytes=max_output_bytes,
+                cpu_seconds=cpu_seconds,
+                memory_mb=memory_mb,
             ),
         ],
     )
