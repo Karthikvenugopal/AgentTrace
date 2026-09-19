@@ -30,7 +30,11 @@ def agent_execution_metadata(config: AgentConfig) -> dict[str, object]:
 
 def start_agent_trace(config: AgentConfig) -> tuple[str, TraceWriter]:
     trace_id = new_id("trace")
-    writer = TraceWriter(config.trace.output, flush_each_record=config.trace.flush_each_record).open()
+    writer = TraceWriter(
+        config.trace.output,
+        flush_each_record=config.trace.flush_each_record,
+        mode="w",
+    ).open()
     writer.write(
         TraceHeader(
             experiment_id=config.experiment_id,

@@ -8,7 +8,7 @@ import threading
 from collections.abc import Iterator
 from pathlib import Path
 from types import TracebackType
-from typing import TextIO
+from typing import Literal, TextIO
 
 from agenttrace.tracing.schema import AnyTraceRecord, TraceHeader
 from agenttrace.tracing.validation import parse_record
@@ -17,9 +17,16 @@ from agenttrace.tracing.validation import parse_record
 class TraceWriter:
     """Thread-safe append-only writer for long-running agent experiments."""
 
-    def __init__(self, path: Path, *, flush_each_record: bool = True) -> None:
+    def __init__(
+        self,
+        path: Path,
+        *,
+        flush_each_record: bool = True,
+        mode: Literal["a", "w"] = "a",
+    ) -> None:
         self.path = path
         self.flush_each_record = flush_each_record
+        self.mode = mode
         self._handle: TextIO | None = None
         self._lock = threading.Lock()
         self._records_written = 0
@@ -30,7 +37,7 @@ class TraceWriter:
 
     def open(self) -> TraceWriter:
         self.path.parent.mkdir(parents=True, exist_ok=True)
-        self._handle = self.path.open("a", encoding="utf-8", buffering=1)
+        self._handle = self.path.open(self.mode, encoding="utf-8", buffering=1)
         return self
 
     def write(self, record: AnyTraceRecord) -> None:
