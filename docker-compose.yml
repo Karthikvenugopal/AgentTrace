@@ -1,6 +1,15 @@
 name: agenttrace
 
 services:
+  mock-server:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    command: ["mock-server", "--host", "0.0.0.0", "--port", "8010"]
+    ports:
+      - "8010:8010"
+    profiles: ["demo"]
+
   otel-collector:
     image: otel/opentelemetry-collector-contrib:0.111.0
     command: ["--config=/etc/otelcol/config.yaml"]
@@ -33,4 +42,3 @@ services:
     ports:
       - "3000:3000"
     depends_on: [prometheus]
-

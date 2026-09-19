@@ -1,0 +1,35 @@
+name: agenttrace-gpu
+
+services:
+  vllm:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.vllm
+    command:
+      - ${AGENTTRACE_MODEL:-Qwen/Qwen2.5-Coder-0.5B-Instruct}
+      - --host
+      - 0.0.0.0
+      - --port
+      - "8000"
+      - --max-model-len
+      - ${AGENTTRACE_MAX_MODEL_LEN:-4096}
+      - --gpu-memory-utilization
+      - ${AGENTTRACE_GPU_MEMORY_UTILIZATION:-0.85}
+      - --max-num-seqs
+      - ${AGENTTRACE_MAX_NUM_SEQS:-8}
+    ports:
+      - "8000:8000"
+    volumes:
+      - model-cache:/root/.cache/huggingface
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    ipc: host
+
+volumes:
+  model-cache: {}
+

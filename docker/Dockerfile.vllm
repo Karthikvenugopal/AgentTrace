@@ -1,0 +1,6 @@
+# GPU-only image. Building does not download model weights; runtime may download the configured model.
+ARG VLLM_IMAGE=vllm/vllm-openai:v0.6.3
+FROM ${VLLM_IMAGE}
+
+ENTRYPOINT ["vllm", "serve"]
+

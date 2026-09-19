@@ -1,0 +1,12 @@
+model: Qwen/Qwen2.5-Coder-0.5B-Instruct
+host: 0.0.0.0
+port: 8000
+dtype: auto
+tensor_parallel_size: 1
+gpu_memory_utilization: 0.85
+max_model_len: 4096
+max_num_seqs: 8
+enable_prefix_caching: false
+disable_log_requests: true
+served_model_name: qwen-coder-small
+trust_remote_code: false
