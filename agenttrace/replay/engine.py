@@ -10,6 +10,7 @@ from agenttrace.config import ReplayConfig
 from agenttrace.models import new_id
 from agenttrace.replay.models import ReplayAttempt, ReplaySessionResult, WorkloadRequest
 from agenttrace.serving.client import InferenceClient, InferenceError, InferenceRequest
+from agenttrace.telemetry.metrics import METRICS
 from agenttrace.telemetry.tracing import trace_span
 
 
@@ -127,14 +128,17 @@ class ReplayEngine:
             submitted_at = datetime.now(UTC)
             started = time.monotonic()
             try:
-                with trace_span(
-                    "replay.request",
-                    {
-                        "agenttrace.replay_session_id": session_id,
-                        "agenttrace.request_id": replay_request_id,
-                        "agenttrace.agent_id": request.agent_id,
-                        "agenttrace.replay_mode": mode,
-                    },
+                with (
+                    METRICS.track_request("replay", self.config.endpoint.model),
+                    trace_span(
+                        "replay.request",
+                        {
+                            "agenttrace.replay_session_id": session_id,
+                            "agenttrace.request_id": replay_request_id,
+                            "agenttrace.agent_id": request.agent_id,
+                            "agenttrace.replay_mode": mode,
+                        },
+                    ),
                 ):
                     response = await asyncio.wait_for(
                         self.client.complete(
@@ -155,6 +159,16 @@ class ReplayEngine:
                         timeout=self.config.request_timeout_seconds,
                     )
                 completed_at = datetime.now(UTC)
+                latency = time.monotonic() - started
+                METRICS.observe_request(
+                    component="replay",
+                    model=self.config.endpoint.model,
+                    status="succeeded",
+                    latency_seconds=latency,
+                    ttft_seconds=response.ttft_seconds,
+                    input_tokens=response.input_tokens or request.content_token_count,
+                    output_tokens=response.output_tokens or 0,
+                )
                 attempts.append(
                     ReplayAttempt(
                         replay_session_id=session_id,
@@ -172,7 +186,7 @@ class ReplayEngine:
                         submitted_at=submitted_at,
                         completed_at=completed_at,
                         status="succeeded",
-                        latency_seconds=time.monotonic() - started,
+                        latency_seconds=latency,
                         ttft_seconds=response.ttft_seconds,
                         input_tokens=response.input_tokens,
                         output_tokens=response.output_tokens,
@@ -183,6 +197,16 @@ class ReplayEngine:
                 break
             except (InferenceError, TimeoutError) as exc:
                 status = "timeout" if isinstance(exc, TimeoutError) else "failed"
+                latency = time.monotonic() - started
+                METRICS.observe_request(
+                    component="replay",
+                    model=self.config.endpoint.model,
+                    status=status,
+                    latency_seconds=latency,
+                    ttft_seconds=None,
+                    input_tokens=request.content_token_count,
+                    output_tokens=0,
+                )
                 attempts.append(
                     ReplayAttempt(
                         replay_session_id=session_id,
@@ -200,7 +224,7 @@ class ReplayEngine:
                         submitted_at=submitted_at,
                         completed_at=datetime.now(UTC),
                         status=status,
-                        latency_seconds=time.monotonic() - started,
+                        latency_seconds=latency,
                         error_type=type(exc).__name__,
                         error_message=str(exc),
                     )
