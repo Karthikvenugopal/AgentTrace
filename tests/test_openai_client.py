@@ -26,6 +26,9 @@ class DelayedSSE(httpx.AsyncByteStream):
             yield f"data: {json.dumps(event)}\n\n".encode()
         yield b"data: [DONE]\n\n"
 
+    async def aclose(self) -> None:
+        return None
+
 
 @pytest.mark.asyncio
 async def test_streaming_client_records_ttft_chunks_and_usage() -> None:
