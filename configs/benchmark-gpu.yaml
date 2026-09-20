@@ -1,4 +1,6 @@
-experiment_id: vllm-single-gpu
+# Controlled resume study. Copy this file, replace every REQUIRED_* value with data
+# captured on the vLLM host, and keep the edited config beside the result artifacts.
+experiment_id: qwen-context-concurrency-gpu
 source_trace: examples/traces/mock-agent.jsonl
 measurement_label: real_inference
 output_dir: results
@@ -7,33 +9,48 @@ replay:
   endpoint:
     base_url: http://127.0.0.1:8000/v1
     model: qwen-coder-small
-    timeout_seconds: 120
+    timeout_seconds: 600
     max_retries: 0
     stream: true
   time_scale: 1
   max_concurrency: 8
-  request_timeout_seconds: 120
+  request_timeout_seconds: 600
   retry_count: 1
-  seed: 7
+  seed: 20260919
   tokenizer: Qwen/Qwen2.5-Coder-0.5B-Instruct
-  output_tokens: 64
-  execution_length: 4
+  tokenizer_revision: bbf27711794f58ebd1796058f4280b53c32e19fc
+  output_tokens: 128
+  ignore_eos: true
+  tool_wait_seconds: 0
+  execution_length: 2
 matrix:
-  context_tokens: [256, 1024, 3072]
+  # 32,000 leaves room for the chat template and 128 generated tokens inside 32,768.
+  context_tokens: [2048, 8192, 16384, 32000]
   concurrent_agents: [1, 2, 4, 8]
-  patterns: [concurrent, parent_subagents]
+  patterns: [concurrent]
   workload_types: [parameterized]
-  replay_modes: [open_loop, closed_loop]
-warmup_requests: 2
-repetitions: 3
+  replay_modes: [closed_loop]
+warmup_requests: 1
+repetitions: 10
 randomize_order: true
 rotate_order_each_repetition: true
-seed: 7
+server_metrics_interval_seconds: 0.1
+seed: 20260919
 server_metadata:
   backend: vllm
+  vllm_version: 0.6.3
   expected_vllm_image: vllm/vllm-openai:v0.6.3
+  vllm_image_digest: REQUIRED_REPLACE_WITH_DOCKER_IMAGE_DIGEST
   model: Qwen/Qwen2.5-Coder-0.5B-Instruct
-  max_model_len: 4096
+  model_revision: bbf27711794f58ebd1796058f4280b53c32e19fc
+  gpu: REQUIRED_REPLACE_WITH_NVIDIA_SMI_GPU_NAME_AND_MEMORY
+  nvidia_driver: REQUIRED_REPLACE_WITH_NVIDIA_DRIVER_VERSION
+  cuda_version: REQUIRED_REPLACE_WITH_CONTAINER_CUDA_VERSION
+  dtype: bfloat16
+  tensor_parallel_size: 1
+  max_model_len: 32768
   max_num_seqs: 8
   gpu_memory_utilization: 0.85
   prefix_caching: false
+  output_token_target: 128
+  ignore_eos: true

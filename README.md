@@ -163,22 +163,32 @@ output size, agent count, arrival rate, tool wait, subagents, and execution leng
 
 ## Real vLLM benchmark
 
-The default GPU profile serves `Qwen/Qwen2.5-Coder-0.5B-Instruct`; it is configurable
-and is not downloaded during CPU setup. A single modern CUDA GPU with at least 8 GB is
-a practical starting point for this 0.5B model and the supplied conservative settings,
-but required memory varies with dtype, context length, concurrency, vLLM release, and
+The GPU study profile serves a pinned revision of
+[`Qwen/Qwen2.5-Coder-0.5B-Instruct`](https://huggingface.co/Qwen/Qwen2.5-Coder-0.5B-Instruct),
+whose model configuration supports 32,768 positions. It is not downloaded during CPU
+setup. A single modern CUDA GPU with at least 8 GB is a practical starting point, but
+required memory varies with dtype, context length, concurrency, vLLM release, and
 KV-cache settings. Treat `nvidia-smi` and vLLM startup output as authoritative.
 
 ```bash
 docker compose -f docker-compose.gpu.yml up --build vllm
+# Copy the study config and replace its REQUIRED_* runtime metadata first.
 AGENTTRACE_VLLM_METRICS_URL=http://127.0.0.1:8000/metrics \
   agenttrace benchmark run --config configs/benchmark-gpu.yaml
-agenttrace benchmark report --results results/vllm-single-gpu
+agenttrace benchmark report --results results/qwen-context-concurrency-gpu
 ```
 
-For one smaller experiment, reduce each matrix list in a copy of
-`configs/benchmark-gpu.yaml` to one value. Record changes to model length, batching,
-prefix caching, dtype, and GPU memory utilization in `server_metadata`.
+The profile tests 2K, 8K, 16K, and 32K-class prompts at concurrency 1, 2, 4, and 8,
+with 128 requested output tokens, ten rotated repetitions, and excluded per-case
+warmups. Two closed-loop requests per agent keep request concurrency bounded by the
+configured agent count. The run emits request-level and summary CSVs, p95 TTFT/latency charts, throughput
+charts, and a report with source values for every percentage. Real runs fail closed if
+required hardware metadata, the advertised model, or vLLM metrics cannot be verified.
+
+For one smaller experiment, reduce each matrix list in a copy of the config. Record
+changes to model length, batching, prefix caching, dtype, and GPU memory utilization in
+`server_metadata`. See [the reproducibility guide](docs/reproducibility.md) for exact
+hardware, driver, CUDA, and container-digest capture commands.
 
 ## Metrics and observability
 

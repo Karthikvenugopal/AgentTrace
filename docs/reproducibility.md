@@ -100,15 +100,36 @@ Install an exact tokenizer in the client environment for model studies:
 pip install -e '.[dev,tokenizers,telemetry]'
 ```
 
-Copy `configs/benchmark-gpu.yaml` and record the exact model/revision, tokenizer,
-`max_model_len`, dtype, tensor parallelism, `max_num_seqs`, GPU memory target, prefix
-cache state, seed, and sampling. Keep these fixed across comparative cases.
+Copy `configs/benchmark-gpu.yaml`. It intentionally contains `REQUIRED_*` hardware and
+image-digest placeholders and fails validation until they are replaced. Capture exact
+runtime values on the serving host:
+
+```bash
+nvidia-smi --query-gpu=name,memory.total,driver_version --format=csv,noheader
+docker image inspect vllm/vllm-openai:v0.6.3 --format '{{index .RepoDigests 0}}'
+docker compose -f docker-compose.gpu.yml exec vllm python -c \
+  'import torch, vllm; print(vllm.__version__, torch.version.cuda, torch.cuda.get_device_name())'
+```
+
+Record those values in the copied configuration. The controlled profile pins the Qwen
+model and tokenizer revision, sets a 32,768-token model limit, disables prefix caching,
+requests 128 output tokens with EOS ignored, and tests 2,048/8,192/16,384/32,000 content
+tokens at concurrency 1/2/4/8. Two closed-loop requests per agent with zero think delay
+and 10 repetitions keep at most one request active per agent while providing 20 samples
+at concurrency=1. The 32,000 target leaves capacity for chat-template tokens and
+generation. Keep all serving flags fixed across cases.
 
 ```bash
 export AGENTTRACE_VLLM_METRICS_URL=http://127.0.0.1:8000/metrics
 agenttrace benchmark run --config configs/benchmark-gpu.yaml
-agenttrace benchmark report --results results/vllm-single-gpu
+agenttrace benchmark report --results results/qwen-context-concurrency-gpu
 ```
+
+The study writes `requests.csv`, `summary.csv`, three p95/throughput charts, JSON audit
+artifacts, and a Markdown report. Ten repetitions and two requests per agent produce at
+least 20 observations for concurrency=1, meeting the reporter's minimum p95 sample size.
+Inspect actual prompt usage and server logs for context-limit rejection before accepting
+the 32K cases.
 
 Run explicit integration checks. They are designed to fail, not skip, after the GPU
 suite is requested and CUDA or the selected model is absent:

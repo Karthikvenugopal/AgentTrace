@@ -80,7 +80,8 @@ Changing a stored token-count field without changing the sent content is prohibi
 
 ## Trial protocol
 
-Warmups run before each measured case and are not written into measured aggregates.
+Warmups run once before the first measured trial of each case and are not written into
+measured aggregates.
 The configured matrix expands context tokens, concurrent agents, execution pattern,
 workload type, and replay mode. A seeded shuffle plus per-repetition rotation reduces
 fixed-order bias. Metadata records model, tokenizer, dependency versions, hardware
@@ -100,7 +101,7 @@ separately count failures, timeouts, and attempts with retry number greater than
 - Median is reported for any non-empty sample.
 - p95 is reported only with at least 20 samples.
 - p99 is reported only with at least 100 samples.
-- Request throughput is successful requests divided by measured trial wall duration.
+- Request throughput is successful requests divided by the measured request window.
 - Input/output token throughput uses successful reported/estimated tokens divided by
   that duration.
 - Tail percentiles are linearly interpolated from ordered observations.
@@ -108,6 +109,22 @@ separately count failures, timeouts, and attempts with retry number greater than
 Repeated trials are pooled within an identical case for the current report. Researchers
 who need uncertainty estimates should use the raw per-trial observations for bootstrap
 confidence intervals or a pre-registered statistical model.
+
+For benchmark matrices, the measured trial window is the earliest measured request
+submission through the latest measured request completion. Setup, workload construction,
+and warmups are outside this denominator. Effective request concurrency is the sum of
+attempt lifetimes divided by that measured window; maximum concurrency comes from a sweep
+over the same attempt intervals. Both include failed and retried attempts because they
+consume serving capacity. Configured agent concurrency remains a separate offered-load
+parameter.
+
+`requests.csv` contains one row per measured attempt, including retry number, status,
+token-count method, timing, and concurrency at submission. `summary.csv` contains one row
+per matrix case. Server-reported token usage is preferred; an explicitly labeled client
+tokenizer fallback is retained when a compatible endpoint omits streamed usage.
+
+A stable configuration has zero failed logical requests across all measured repetitions.
+This is the eligibility rule for “best stable throughput” and concurrency comparisons.
 
 ## Required analyses
 

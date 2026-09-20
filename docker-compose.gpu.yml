@@ -7,12 +7,18 @@ services:
       dockerfile: docker/Dockerfile.vllm
     command:
       - ${AGENTTRACE_MODEL:-Qwen/Qwen2.5-Coder-0.5B-Instruct}
+      - --revision
+      - ${AGENTTRACE_MODEL_REVISION:-bbf27711794f58ebd1796058f4280b53c32e19fc}
       - --host
       - 0.0.0.0
       - --port
       - "8000"
+      - --served-model-name
+      - ${AGENTTRACE_SERVED_MODEL_NAME:-qwen-coder-small}
+      - --dtype
+      - ${AGENTTRACE_DTYPE:-bfloat16}
       - --max-model-len
-      - ${AGENTTRACE_MAX_MODEL_LEN:-4096}
+      - ${AGENTTRACE_MAX_MODEL_LEN:-32768}
       - --gpu-memory-utilization
       - ${AGENTTRACE_GPU_MEMORY_UTILIZATION:-0.85}
       - --max-num-seqs
@@ -32,4 +38,3 @@ services:
 
 volumes:
   model-cache: {}
-

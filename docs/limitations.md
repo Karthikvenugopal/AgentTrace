@@ -69,6 +69,10 @@ Randomization and rotation reduce fixed-order bias but cannot remove time trends
 trial counts, failures, timeouts, retry policy, and execution order. Use more repetitions
 and uncertainty estimates for research claims.
 
+The resume-study report computes descriptive percentage changes from pooled requests; it
+does not claim statistical significance. Rerun any anomalous trial as a new, disclosed
+repetition rather than deleting it from raw observations.
+
 ## Security boundary
 
 Path resolution, isolation copies, allowlists, timeouts, and no-shell subprocesses reduce
