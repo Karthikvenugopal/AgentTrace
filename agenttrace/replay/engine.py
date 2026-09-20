@@ -154,6 +154,7 @@ class ReplayEngine:
                                 or request.expected_output_tokens,
                                 seed=self.config.seed,
                                 stream=True,
+                                ignore_eos=self.config.ignore_eos,
                             )
                         ),
                         timeout=self.config.request_timeout_seconds,
@@ -188,8 +189,28 @@ class ReplayEngine:
                         status="succeeded",
                         latency_seconds=latency,
                         ttft_seconds=response.ttft_seconds,
-                        input_tokens=response.input_tokens,
-                        output_tokens=response.output_tokens,
+                        input_tokens=(
+                            response.input_tokens
+                            if response.input_tokens is not None
+                            else request.content_token_count
+                        ),
+                        output_tokens=(
+                            response.output_tokens
+                            if response.output_tokens is not None
+                            else sum(chunk.estimated_tokens for chunk in response.chunks)
+                        ),
+                        input_token_method=(
+                            "server_usage"
+                            if response.input_tokens is not None
+                            else "client_content_tokenizer_fallback"
+                        ),
+                        output_token_method=(
+                            "server_usage"
+                            if response.output_tokens is not None
+                            else "client_stream_tokenizer_fallback"
+                        ),
+                        server_request_id=response.server_request_id,
+                        finish_reason=response.finish_reason,
                         stream_chunk_arrivals_seconds=[c.elapsed_seconds for c in response.chunks],
                         stream_chunk_token_counts=[c.estimated_tokens for c in response.chunks],
                     )

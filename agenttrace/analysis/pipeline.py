@@ -75,29 +75,29 @@ def analyze_experiment(experiment_dir: Path, *, source_trace: Path | None = None
     charts_dir = experiment_dir / "charts"
     charts_dir.mkdir(exist_ok=True)
     chart_results = {
-        "context_vs_ttft": _plot_case_metric(
+        "p95_ttft_vs_context": _plot_case_metric(
             aggregates,
             x_key="context_tokens",
-            y_path=("ttft_seconds", "median"),
+            y_path=("ttft_seconds", "p95"),
             x_label="Prompt context (content tokens)",
-            y_label="Median client-observed TTFT (seconds)",
-            output=charts_dir / "context-vs-ttft.png",
+            y_label="p95 client-observed TTFT (seconds)",
+            output=charts_dir / "p95-ttft-vs-context.png",
         ),
-        "concurrency_vs_latency": _plot_case_metric(
+        "p95_latency_vs_concurrency": _plot_case_metric(
             aggregates,
             x_key="concurrent_agents",
-            y_path=("latency_seconds", "median"),
+            y_path=("latency_seconds", "p95"),
             x_label="Configured concurrent agents",
-            y_label="Median end-to-end client latency (seconds)",
-            output=charts_dir / "concurrency-vs-latency.png",
+            y_label="p95 client end-to-end latency (seconds)",
+            output=charts_dir / "p95-latency-vs-concurrency.png",
         ),
-        "concurrency_vs_generation_throughput": _plot_case_metric(
+        "output_throughput_vs_concurrency": _plot_case_metric(
             aggregates,
             x_key="concurrent_agents",
             y_path=("output_token_throughput_per_second",),
             x_label="Configured concurrent agents",
             y_label="Aggregate output-token throughput (tokens/second)",
-            output=charts_dir / "concurrency-vs-output-throughput.png",
+            output=charts_dir / "output-throughput-vs-concurrency.png",
         ),
         "tool_wait_vs_server_utilization": _plot_tool_wait_utilization(
             observations,
@@ -136,6 +136,7 @@ def analyze_experiment(experiment_dir: Path, *, source_trace: Path | None = None
         "measured_aggregate_results": aggregates,
         "source_trace_analysis": trace_analysis,
         "charts": chart_results,
+        "comparisons": _benchmark_comparisons(aggregates),
         "unavailable_analyses": unavailable,
         "interpretation": (
             "This file reports observations only. It does not claim causal improvements or "
@@ -164,7 +165,16 @@ def _plot_case_metric(
         if value is None:
             continue
         config = case["configuration"]
-        label = f"{config['replay_mode']} / {config['pattern']}"
+        if x_key == "context_tokens":
+            label = (
+                f"concurrency={config['concurrent_agents']} / "
+                f"{config['replay_mode']} / {config['pattern']}"
+            )
+        else:
+            label = (
+                f"context={config['context_tokens']} / "
+                f"{config['replay_mode']} / {config['pattern']}"
+            )
         series[label].append((float(config[x_key]), float(value)))
     if not series:
         return "unavailable: no supported observations"
@@ -337,3 +347,162 @@ def _plot_subagent_arrivals(path: Path, output: Path, experiment_id: str) -> str
     figure.savefig(output, dpi=150)
     plt.close(figure)
     return str(output)
+
+
+def _benchmark_comparisons(aggregates: dict[str, Any]) -> dict[str, Any]:
+    cases = _preferred_study_cases(aggregates["cases"])
+    context_cases = [
+        case
+        for case in cases
+        if case["configuration"]["concurrent_agents"] == 1
+        and _stable(case)
+        and case["ttft_seconds"]["p95"] is not None
+        and case["latency_seconds"]["p95"] is not None
+    ]
+    context_scaling: dict[str, Any] | None = None
+    if len(context_cases) >= 2:
+        smallest = min(context_cases, key=lambda case: case["configuration"]["context_tokens"])
+        largest = max(context_cases, key=lambda case: case["configuration"]["context_tokens"])
+        context_scaling = {
+            "baseline": _comparison_values(smallest),
+            "comparison": _comparison_values(largest),
+            "p95_ttft_percent_change": _percent_change(
+                smallest["ttft_seconds"]["p95"], largest["ttft_seconds"]["p95"]
+            ),
+            "p95_latency_percent_change": _percent_change(
+                smallest["latency_seconds"]["p95"], largest["latency_seconds"]["p95"]
+            ),
+            "output_throughput_percent_change": _percent_change(
+                smallest["output_token_throughput_per_second"],
+                largest["output_token_throughput_per_second"],
+            ),
+        }
+
+    available_contexts = sorted({case["configuration"]["context_tokens"] for case in cases})
+    representative = (
+        min(available_contexts, key=lambda value: abs(value - 8192)) if available_contexts else None
+    )
+    concurrency_scaling: dict[str, Any] | None = None
+    if representative is not None:
+        candidates = [
+            case
+            for case in cases
+            if case["configuration"]["context_tokens"] == representative
+            and _stable(case)
+            and case["ttft_seconds"]["p95"] is not None
+            and case["latency_seconds"]["p95"] is not None
+        ]
+        baseline = next(
+            (case for case in candidates if case["configuration"]["concurrent_agents"] == 1),
+            None,
+        )
+        highest = max(
+            candidates,
+            key=lambda case: case["configuration"]["concurrent_agents"],
+            default=None,
+        )
+        if baseline is not None and highest is not None and highest is not baseline:
+            concurrency_scaling = {
+                "representative_context_tokens": representative,
+                "baseline": _comparison_values(baseline),
+                "comparison": _comparison_values(highest),
+                "output_throughput_percent_change": _percent_change(
+                    baseline["output_token_throughput_per_second"],
+                    highest["output_token_throughput_per_second"],
+                ),
+                "p95_ttft_percent_change": _percent_change(
+                    baseline["ttft_seconds"]["p95"], highest["ttft_seconds"]["p95"]
+                ),
+                "p95_latency_percent_change": _percent_change(
+                    baseline["latency_seconds"]["p95"],
+                    highest["latency_seconds"]["p95"],
+                ),
+            }
+
+    stable = [case for case in cases if _stable(case)]
+    best = max(
+        stable,
+        key=lambda case: case["output_token_throughput_per_second"] or float("-inf"),
+        default=None,
+    )
+    tradeoffs: list[dict[str, Any]] = []
+    for context in available_contexts:
+        same_context = [
+            case
+            for case in stable
+            if case["configuration"]["context_tokens"] == context
+            and case["latency_seconds"]["p95"] is not None
+        ]
+        baseline = next(
+            (case for case in same_context if case["configuration"]["concurrent_agents"] == 1),
+            None,
+        )
+        if baseline is None:
+            continue
+        for candidate in same_context:
+            throughput_change = _percent_change(
+                baseline["output_token_throughput_per_second"],
+                candidate["output_token_throughput_per_second"],
+            )
+            latency_change = _percent_change(
+                baseline["latency_seconds"]["p95"], candidate["latency_seconds"]["p95"]
+            )
+            if (throughput_change or 0) > 0 and (latency_change or 0) > 0:
+                tradeoffs.append(
+                    {
+                        "baseline": _comparison_values(baseline),
+                        "comparison": _comparison_values(candidate),
+                        "output_throughput_percent_change": throughput_change,
+                        "p95_latency_percent_change": latency_change,
+                    }
+                )
+    largest_tradeoff = max(
+        tradeoffs,
+        key=lambda comparison: comparison["p95_latency_percent_change"] or float("-inf"),
+        default=None,
+    )
+    return {
+        "context_scaling_at_concurrency_1": context_scaling,
+        "concurrency_scaling_at_representative_context": concurrency_scaling,
+        "best_stable_output_throughput": _comparison_values(best) if best else None,
+        "largest_observed_latency_tradeoff": largest_tradeoff,
+        "stable_definition": "zero failed logical requests across all repetitions",
+    }
+
+
+def _preferred_study_cases(cases: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    preferred = [
+        case
+        for case in cases
+        if case["configuration"]["replay_mode"] == "open_loop"
+        and case["configuration"]["pattern"] == "concurrent"
+        and case["configuration"]["workload_type"] == "parameterized"
+    ]
+    return preferred or cases
+
+
+def _comparison_values(case: dict[str, Any] | None) -> dict[str, Any]:
+    if case is None:
+        return {}
+    config = case["configuration"]
+    return {
+        "case_id": case["case_id"],
+        "context_tokens": config["context_tokens"],
+        "concurrent_agents": config["concurrent_agents"],
+        "successful_requests": case["successful_requests"],
+        "failed_requests": case["failed_requests"],
+        "failure_rate": case["failure_rate"],
+        "p95_ttft_seconds": case["ttft_seconds"]["p95"],
+        "p95_latency_seconds": case["latency_seconds"]["p95"],
+        "output_tokens_per_second": case["output_token_throughput_per_second"],
+    }
+
+
+def _stable(case: dict[str, Any]) -> bool:
+    return bool(case["successful_requests"] > 0 and case["failed_requests"] == 0)
+
+
+def _percent_change(baseline: Any, comparison: Any) -> float | None:
+    if baseline is None or comparison is None or float(baseline) == 0:
+        return None
+    return (float(comparison) - float(baseline)) / float(baseline) * 100.0

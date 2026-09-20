@@ -109,8 +109,10 @@ class ReplayConfig(StrictModel):
     retry_count: int = Field(default=1, ge=0, le=10)
     seed: int = 7
     tokenizer: str | None = None
+    tokenizer_revision: str | None = None
     prompt_tokens: int | None = Field(default=None, gt=0)
     output_tokens: int | None = Field(default=None, gt=0)
+    ignore_eos: bool = False
     concurrent_agents: int | None = Field(default=None, gt=0)
     arrival_rate: float | None = Field(default=None, gt=0)
     tool_wait_seconds: float | None = Field(default=None, ge=0)
@@ -165,6 +167,45 @@ class BenchmarkConfig(StrictModel):
     server_metrics_interval_seconds: float = Field(default=0.25, gt=0)
     seed: int = 7
     server_metadata: dict[str, Any] = Field(default_factory=dict)
+
+    @model_validator(mode="after")
+    def real_measurements_require_reproducibility_metadata(self) -> BenchmarkConfig:
+        if self.measurement_label != "real_inference":
+            return self
+        required = {
+            "backend",
+            "vllm_version",
+            "model",
+            "model_revision",
+            "gpu",
+            "nvidia_driver",
+            "cuda_version",
+            "dtype",
+            "max_model_len",
+            "max_num_seqs",
+            "gpu_memory_utilization",
+            "prefix_caching",
+            "vllm_image_digest",
+        }
+        missing = sorted(required - self.server_metadata.keys())
+        if missing:
+            raise ValueError(
+                "real_inference benchmarks require exact server_metadata fields: "
+                + ", ".join(missing)
+            )
+        if self.server_metadata.get("backend") != "vllm":
+            raise ValueError("real_inference benchmarks must declare backend: vllm")
+        placeholders = [
+            key
+            for key in required
+            if str(self.server_metadata.get(key, "")).strip().upper().startswith("REQUIRED")
+        ]
+        if placeholders:
+            raise ValueError(
+                "replace required server_metadata placeholders before a real run: "
+                + ", ".join(sorted(placeholders))
+            )
+        return self
 
 
 ConfigT = TypeVar("ConfigT", bound=BaseModel)

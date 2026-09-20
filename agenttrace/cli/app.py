@@ -134,7 +134,7 @@ def replay_run(
 
     async def execute() -> None:
         workload = load_workload(trace)
-        counter = build_token_counter(settings.tokenizer)
+        counter = build_token_counter(settings.tokenizer, settings.tokenizer_revision)
         if settings.mode == "parameterized":
             workload = transform_workload(workload, settings, counter)
             write_transformation_manifest(
@@ -173,7 +173,7 @@ def replay_run(
 @benchmark_app.command("run")
 def benchmark_run(config: Annotated[Path, typer.Option(exists=True, dir_okay=False)]) -> None:
     settings = load_config(config, BenchmarkConfig)
-    counter = build_token_counter(settings.replay.tokenizer)
+    counter = build_token_counter(settings.replay.tokenizer, settings.replay.tokenizer_revision)
     metrics_url = os.getenv("AGENTTRACE_VLLM_METRICS_URL")
     metrics = VLLMMetricsAdapter(metrics_url) if metrics_url else None
 

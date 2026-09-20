@@ -9,6 +9,8 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+import httpx
+
 from agenttrace.benchmarking.matrix import BenchmarkCase, ordered_cases
 from agenttrace.benchmarking.provenance import capture_provenance
 from agenttrace.config import BenchmarkConfig, EndpointConfig, ReplayConfig
@@ -43,9 +45,10 @@ class BenchmarkRunner:
         source = load_workload(self.config.source_trace)
         if not source:
             raise ValueError("benchmark source trace has no inference requests")
+        preflight = await self._preflight()
         self.experiment_dir.mkdir(parents=True, exist_ok=True)
         started_at = datetime.now(UTC)
-        self._write_metadata(started_at)
+        self._write_metadata(started_at, preflight)
         observations = self.experiment_dir / "observations.jsonl"
         observations.write_text("", encoding="utf-8")
         with trace_span(
@@ -127,7 +130,9 @@ class BenchmarkRunner:
                     pass
 
         try:
-            if self.config.warmup_requests:
+            # Warm each configuration once. Re-warming every repetition would add a
+            # configuration-dependent amount of unmeasured server work.
+            if repetition == 0 and self.config.warmup_requests:
                 warmup = workload[: self.config.warmup_requests]
                 if warmup:
                     await engine.run_closed_loop(warmup)
@@ -155,7 +160,60 @@ class BenchmarkRunner:
             errors.append(f"{type(exc).__name__}: {exc}")
             return None
 
-    def _write_metadata(self, started_at: datetime) -> None:
+    async def _preflight(self) -> dict[str, Any]:
+        if self.config.measurement_label != "real_inference":
+            return {"classification": "mock", "vllm_metrics_verified": False}
+        if self.server_metrics is None:
+            raise ValueError(
+                "real_inference requires AGENTTRACE_VLLM_METRICS_URL so the target can be "
+                "verified as vLLM"
+            )
+        if self.config.replay.tokenizer is None:
+            raise ValueError("real_inference requires an exact model tokenizer")
+        snapshot = await self.server_metrics.collect()
+        vllm_names = [
+            name
+            for name in snapshot.raw_metric_names
+            if name.startswith("vllm:") or name.startswith("vllm_")
+        ]
+        if not vllm_names:
+            raise ValueError(
+                "real_inference target did not expose vLLM metric families; refusing to label "
+                "the run as vLLM inference"
+            )
+        base_url = str(self.config.replay.endpoint.base_url).rstrip("/")
+        headers: dict[str, str] = {}
+        api_key = self.config.replay.endpoint.api_key
+        if api_key is not None:
+            headers["Authorization"] = f"Bearer {api_key.get_secret_value()}"
+        async with httpx.AsyncClient(
+            timeout=self.config.replay.endpoint.timeout_seconds, headers=headers
+        ) as client:
+            response = await client.get(f"{base_url}/models")
+            response.raise_for_status()
+            body = response.json()
+        advertised = sorted(
+            str(item.get("id"))
+            for item in body.get("data", [])
+            if isinstance(item, dict) and item.get("id")
+        )
+        configured_model = self.config.replay.endpoint.model
+        if configured_model not in advertised:
+            raise ValueError(
+                f"configured model {configured_model!r} is not advertised by the endpoint: "
+                f"{advertised}"
+            )
+        return {
+            "classification": "real_vllm_inference",
+            "models_endpoint": f"{base_url}/models",
+            "configured_served_model": configured_model,
+            "advertised_models": advertised,
+            "metrics_endpoint": snapshot.endpoint,
+            "vllm_metrics_verified": True,
+            "vllm_metric_family_count": len(vllm_names),
+        }
+
+    def _write_metadata(self, started_at: datetime, preflight: dict[str, Any]) -> None:
         config = self.config.model_dump(mode="json", exclude={"replay": {"endpoint": {"api_key"}}})
         metadata = {
             "experiment_id": self.config.experiment_id,
@@ -165,6 +223,7 @@ class BenchmarkRunner:
             "token_count_method": self.counter.method,
             "configuration": config,
             "server_configuration": self.config.server_metadata,
+            "preflight": preflight,
             "warmups_excluded_from_measurements": True,
         }
         (self.experiment_dir / "metadata.json").write_text(
@@ -180,6 +239,7 @@ class BenchmarkRunner:
             "endpoint": snapshot.endpoint,
             "available": snapshot.available,
             "unavailable": snapshot.unavailable,
+            "raw_metric_names": snapshot.raw_metric_names,
         }
 
     def _append_observation(

@@ -12,6 +12,7 @@ class VLLMServerConfig(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     model: str
+    revision: str | None = None
     host: str = "127.0.0.1"
     port: int = Field(default=8000, ge=1, le=65535)
     dtype: Literal["auto", "half", "float16", "bfloat16", "float"] = "auto"
@@ -52,6 +53,8 @@ def build_vllm_command(config: VLLMServerConfig) -> list[str]:
         command.append("--disable-log-requests")
     if config.served_model_name:
         command.extend(["--served-model-name", config.served_model_name])
+    if config.revision:
+        command.extend(["--revision", config.revision])
     if config.tokenizer:
         command.extend(["--tokenizer", config.tokenizer])
     if config.trust_remote_code:
@@ -73,6 +76,7 @@ def serving_metadata(config: VLLMServerConfig) -> dict[str, object]:
         "backend": "vllm",
         "vllm_version": installed_vllm_version(),
         "model": config.model,
+        "model_revision": config.revision,
         "tokenizer": config.tokenizer or config.model,
         "tensor_parallel_size": config.tensor_parallel_size,
         "gpu_memory_utilization": config.gpu_memory_utilization,

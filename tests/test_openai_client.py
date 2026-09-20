@@ -75,3 +75,16 @@ async def test_http_failure_is_retained_as_typed_error() -> None:
     await client.close()
     assert caught.value.status_code == 503
     assert caught.value.retryable
+
+
+def test_vllm_ignore_eos_extension_is_explicit() -> None:
+    request = InferenceRequest(
+        request_id="fixed-output",
+        model="mock",
+        messages=[ChatMessage(role=MessageRole.USER, content="continue")],
+        max_tokens=128,
+        ignore_eos=True,
+    )
+    payload = request.openai_payload()
+    assert payload["max_tokens"] == 128
+    assert payload["ignore_eos"] is True

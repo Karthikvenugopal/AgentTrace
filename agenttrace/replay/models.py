@@ -50,6 +50,10 @@ class ReplayAttempt(ReplayModel):
     ttft_seconds: float | None = Field(default=None, ge=0)
     input_tokens: int | None = Field(default=None, ge=0)
     output_tokens: int | None = Field(default=None, ge=0)
+    input_token_method: str | None = None
+    output_token_method: str | None = None
+    server_request_id: str | None = None
+    finish_reason: str | None = None
     stream_chunk_arrivals_seconds: list[float] = Field(default_factory=list)
     stream_chunk_token_counts: list[int] = Field(default_factory=list)
     error_type: str | None = None

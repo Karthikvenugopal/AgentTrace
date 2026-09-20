@@ -18,6 +18,7 @@ class InferenceRequest:
     max_tokens: int = 256
     seed: int | None = None
     stream: bool = True
+    ignore_eos: bool = False
     extra_headers: dict[str, str] = field(default_factory=dict)
 
     def openai_payload(self) -> dict[str, Any]:
@@ -38,6 +39,9 @@ class InferenceRequest:
         }
         if self.seed is not None:
             payload["seed"] = self.seed
+        if self.ignore_eos:
+            # vLLM extension: generate until max_tokens instead of stopping at EOS.
+            payload["ignore_eos"] = True
         if self.stream:
             payload["stream_options"] = {"include_usage": True}
         return payload

@@ -43,13 +43,13 @@ class TransformersTokenCounter:
 
     method = "transformers_encode"
 
-    def __init__(self, model_or_path: str) -> None:
+    def __init__(self, model_or_path: str, revision: str | None = None) -> None:
         try:
             from transformers import AutoTokenizer
         except ImportError as exc:  # pragma: no cover - optional dependency
             raise RuntimeError("install agenttrace[tokenizers] for exact token counting") from exc
-        self._tokenizer = AutoTokenizer.from_pretrained(model_or_path)
-        self._identity = model_or_path
+        self._tokenizer = AutoTokenizer.from_pretrained(model_or_path, revision=revision)
+        self._identity = f"{model_or_path}@{revision}" if revision else model_or_path
 
     @property
     def identity(self) -> str:
@@ -81,10 +81,10 @@ class TokenAccounting:
     breakdown: PromptTokenBreakdown
 
 
-def build_token_counter(tokenizer: str | None) -> TokenCounter:
+def build_token_counter(tokenizer: str | None, revision: str | None = None) -> TokenCounter:
     """Use an exact configured tokenizer, or an explicitly labeled test estimate."""
 
-    return TransformersTokenCounter(tokenizer) if tokenizer else WhitespaceTokenCounter()
+    return TransformersTokenCounter(tokenizer, revision) if tokenizer else WhitespaceTokenCounter()
 
 
 def count_messages(messages: list[ChatMessage], counter: TokenCounter) -> TokenAccounting:
